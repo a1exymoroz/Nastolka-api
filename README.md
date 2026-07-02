@@ -51,7 +51,22 @@ set -a && source .env.local && set +a
 mvn spring-boot:run -Dspring-boot.run.profiles=local
 ```
 
-The app connects to `jdbc:postgresql://localhost:5432/nastolka` using credentials from `.env.local`.
+The app connects to PostgreSQL on `localhost:${POSTGRES_PORT}` using credentials from `.env.local`.
+
+## Local ports
+
+| Service | URL / connection | Notes |
+|---------|------------------|-------|
+| API | http://localhost:8090 | Spring Boot (`SERVER_PORT`) |
+| Adminer | http://localhost:8091 | Browser DB UI (`ADMINER_PORT`) |
+| PostgreSQL | localhost:5433 | Host port (`POSTGRES_PORT`), avoids conflict with other apps on 5432 |
+
+**Adminer login** (from browser at http://localhost:8091):
+
+- System: PostgreSQL
+- Server: `postgres`
+- Username / password / database: from `.env.local`
+- Port: `5432` (internal Docker port, not 5433)
 
 ## Project structure
 
@@ -89,10 +104,14 @@ src/main/java/com/nastolka/
 
 Import the files from `postman/` into Postman:
 
-1. **Nastolka-API.postman_collection.json** — requests for auth and games
-2. **Nastolka-Local.postman_environment.json** — local variables (`baseUrl`, test user, `token`)
+1. **Nastolka-API.postman_collection.json** — auth, games, and JWT failure tests
+2. **Nastolka-Local.postman_environment.json** — `baseUrl` (8090), credentials, `token`
 
-Select the **Nastolka Local** environment, then run **Register** or **Login** — the JWT is saved automatically to `token` for **Get All Games**.
+Select the **Nastolka Local** environment, then:
+
+1. **Register** — creates a unique user and saves `token`
+2. **Get All Games** — uses Bearer `{{token}}`
+3. **Get All Games - No Token** / **Invalid Token** — expect 403 / 401
 
 ## Stop PostgreSQL
 

@@ -20,4 +20,6 @@ else
   exit 1
 fi
 
-echo "PostgreSQL is starting. Check status with: docker-compose ps"
+echo "PostgreSQL is starting on port ${POSTGRES_PORT:-5433}."
+echo "Adminer (browser): http://localhost:${ADMINER_PORT:-8091}"
+echo "Check status with: docker-compose ps"

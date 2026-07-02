@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Nastolka API",
-    "description": "Board game application backend API",
+    "description": "Board game application backend API.\n\n**Setup:** Import this collection and `Nastolka-Local.postman_environment.json`, select the **Nastolka Local** environment.\n\n**Flow:** Register (or Login) → token saved automatically → Get All Games.\n\n**Base URL:** http://localhost:8090",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -12,24 +12,45 @@
           "name": "Register",
           "event": [
             {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const suffix = Date.now();",
+                  "pm.environment.set('registerUsername', 'user_' + suffix);",
+                  "pm.environment.set('registerEmail', 'user_' + suffix + '@example.com');"
+                ]
+              }
+            },
+            {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
+                  "pm.test('Status is 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
                   "if (pm.response.code === 201) {",
                   "    const json = pm.response.json();",
-                  "    if (json.token) {",
-                  "        pm.environment.set('token', json.token);",
-                  "    }",
-                  "    if (json.username) {",
-                  "        pm.environment.set('username', json.username);",
-                  "    }",
+                  "    pm.test('Response contains token', function () {",
+                  "        pm.expect(json.token).to.be.a('string').and.not.empty;",
+                  "    });",
+                  "    pm.test('Response contains username', function () {",
+                  "        pm.expect(json.username).to.eql(pm.environment.get('registerUsername'));",
+                  "    });",
+                  "    pm.environment.set('token', json.token);",
+                  "    pm.environment.set('username', json.username);",
+                  "    pm.environment.set('email', pm.environment.get('registerEmail'));",
                   "}"
                 ]
               }
             }
           ],
           "request": {
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
               {
@@ -39,14 +60,14 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\",\n  \"email\": \"{{email}}\"\n}"
+              "raw": "{\n  \"username\": \"{{registerUsername}}\",\n  \"password\": \"{{password}}\",\n  \"email\": \"{{registerEmail}}\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/register",
               "host": ["{{baseUrl}}"],
               "path": ["api", "auth", "register"]
             },
-            "description": "Register a new user. Saves JWT token to environment on success."
+            "description": "Register a new user with a unique username/email (generated per request).\n\nSaves `token` and `username` to the environment on success."
           },
           "response": []
         },
@@ -58,20 +79,28 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
+                  "pm.test('Status is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
                   "if (pm.response.code === 200) {",
                   "    const json = pm.response.json();",
-                  "    if (json.token) {",
-                  "        pm.environment.set('token', json.token);",
-                  "    }",
-                  "    if (json.username) {",
-                  "        pm.environment.set('username', json.username);",
-                  "    }",
+                  "    pm.test('Response contains token', function () {",
+                  "        pm.expect(json.token).to.be.a('string').and.not.empty;",
+                  "    });",
+                  "    pm.test('Response contains username', function () {",
+                  "        pm.expect(json.username).to.eql(pm.environment.get('username'));",
+                  "    });",
+                  "    pm.environment.set('token', json.token);",
                   "}"
                 ]
               }
             }
           ],
           "request": {
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
               {
@@ -88,17 +117,35 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "auth", "login"]
             },
-            "description": "Login and receive JWT token. Saves token to environment on success."
+            "description": "Login with `username` and `password` from the environment.\n\nRun **Register** first, or set credentials manually. Saves `token` on success."
           },
           "response": []
         }
-      ]
+      ],
+      "description": "Public auth endpoints. No Bearer token required."
     },
     {
       "name": "Games",
       "item": [
         {
           "name": "Get All Games",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is JSON array', function () {",
+                  "    pm.expect(pm.response.json()).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "auth": {
               "type": "bearer",
@@ -117,11 +164,79 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "games"]
             },
-            "description": "Fetch all available games. Requires JWT authentication."
+            "description": "Fetch all available games. Requires a valid JWT in `{{token}}`.\n\nRun **Login** or **Register** first."
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Games - No Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 403 Forbidden', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/games",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "games"]
+            },
+            "description": "Expect **403** when no Authorization header is sent."
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Games - Invalid Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 401 Unauthorized', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{invalidToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/games",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "games"]
+            },
+            "description": "Expect **401** when an invalid Bearer token is sent."
           },
           "response": []
         }
-      ]
+      ],
+      "description": "Protected game endpoints. Require JWT unless testing auth failures."
     }
   ]
 }
