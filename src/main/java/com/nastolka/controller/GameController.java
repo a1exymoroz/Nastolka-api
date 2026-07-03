@@ -1,9 +1,14 @@
 package com.nastolka.controller;
 
+import com.nastolka.dto.CreateGameRequest;
 import com.nastolka.dto.GameResponse;
 import com.nastolka.service.GameService;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -21,7 +26,13 @@ public class GameController {
 
     @GetMapping
     public ResponseEntity<List<GameResponse>> getAllGames() {
-        List<GameResponse> games = gameService.getAllAvailableGames();
+        List<GameResponse> games = gameService.getAllGames();
         return ResponseEntity.ok(games);
+    }
+
+    @PostMapping
+    public ResponseEntity<GameResponse> createGame(@Valid @RequestBody CreateGameRequest request) {
+        GameResponse game = gameService.createGame(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(game);
     }
 }

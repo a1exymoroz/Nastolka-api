@@ -1,5 +1,6 @@
 package com.nastolka.service.impl;
 
+import com.nastolka.dto.CreateGameRequest;
 import com.nastolka.dto.GameResponse;
 import com.nastolka.entity.Game;
 import com.nastolka.repository.GameRepository;
@@ -18,24 +19,29 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
-    public List<GameResponse> getAllAvailableGames() {
-        // TODO: Implement query logic (filtering, pagination, sorting, etc.)
-        List<Game> games = gameRepository.findByAvailableTrue();
-
-        return games.stream()
+    public List<GameResponse> getAllGames() {
+        return gameRepository.findAll().stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    @Override
+    public GameResponse createGame(CreateGameRequest request) {
+        Game game = new Game();
+        game.setName(request.getName());
+        game.setDescription(request.getDescription());
+        game.setPhoto(request.getPhoto());
+
+        Game saved = gameRepository.save(game);
+        return toResponse(saved);
     }
 
     private GameResponse toResponse(Game game) {
         return GameResponse.builder()
                 .id(game.getId())
-                .title(game.getTitle())
+                .name(game.getName())
                 .description(game.getDescription())
-                .minPlayers(game.getMinPlayers())
-                .maxPlayers(game.getMaxPlayers())
-                .playTimeMinutes(game.getPlayTimeMinutes())
-                .available(game.getAvailable())
+                .photo(game.getPhoto())
                 .build();
     }
 }

@@ -3,12 +3,9 @@ package com.nastolka.dto;
 public class GameResponse {
 
     private Long id;
-    private String title;
+    private String name;
     private String description;
-    private Integer minPlayers;
-    private Integer maxPlayers;
-    private Integer playTimeMinutes;
-    private Boolean available;
+    private String photo;
 
     public GameResponse() {
     }
@@ -25,12 +22,12 @@ public class GameResponse {
         this.id = id;
     }
 
-    public String getTitle() {
-        return title;
+    public String getName() {
+        return name;
     }
 
-    public void setTitle(String title) {
-        this.title = title;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getDescription() {
@@ -41,54 +38,27 @@ public class GameResponse {
         this.description = description;
     }
 
-    public Integer getMinPlayers() {
-        return minPlayers;
+    public String getPhoto() {
+        return photo;
     }
 
-    public void setMinPlayers(Integer minPlayers) {
-        this.minPlayers = minPlayers;
-    }
-
-    public Integer getMaxPlayers() {
-        return maxPlayers;
-    }
-
-    public void setMaxPlayers(Integer maxPlayers) {
-        this.maxPlayers = maxPlayers;
-    }
-
-    public Integer getPlayTimeMinutes() {
-        return playTimeMinutes;
-    }
-
-    public void setPlayTimeMinutes(Integer playTimeMinutes) {
-        this.playTimeMinutes = playTimeMinutes;
-    }
-
-    public Boolean getAvailable() {
-        return available;
-    }
-
-    public void setAvailable(Boolean available) {
-        this.available = available;
+    public void setPhoto(String photo) {
+        this.photo = photo;
     }
 
     public static class Builder {
         private Long id;
-        private String title;
+        private String name;
         private String description;
-        private Integer minPlayers;
-        private Integer maxPlayers;
-        private Integer playTimeMinutes;
-        private Boolean available;
+        private String photo;
 
         public Builder id(Long id) {
             this.id = id;
             return this;
         }
 
-        public Builder title(String title) {
-            this.title = title;
+        public Builder name(String name) {
+            this.name = name;
             return this;
         }
 
@@ -97,35 +67,17 @@ public class GameResponse {
             return this;
         }
 
-        public Builder minPlayers(Integer minPlayers) {
-            this.minPlayers = minPlayers;
-            return this;
-        }
-
-        public Builder maxPlayers(Integer maxPlayers) {
-            this.maxPlayers = maxPlayers;
-            return this;
-        }
-
-        public Builder playTimeMinutes(Integer playTimeMinutes) {
-            this.playTimeMinutes = playTimeMinutes;
-            return this;
-        }
-
-        public Builder available(Boolean available) {
-            this.available = available;
+        public Builder photo(String photo) {
+            this.photo = photo;
             return this;
         }
 
         public GameResponse build() {
             GameResponse response = new GameResponse();
             response.id = id;
-            response.title = title;
+            response.name = name;
             response.description = description;
-            response.minPlayers = minPlayers;
-            response.maxPlayers = maxPlayers;
-            response.playTimeMinutes = playTimeMinutes;
-            response.available = available;
+            response.photo = photo;
             return response;
         }
     }

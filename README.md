@@ -19,9 +19,11 @@ Credentials live in `.env.local` (gitignored). Create it with your database and 
 ### 2. Start PostgreSQL
 
 ```bash
-chmod +x scripts/start-db.sh
+chmod +x scripts/start-db.sh scripts/run-local.sh
 ./scripts/start-db.sh
 ```
+
+`run-local.sh` starts PostgreSQL automatically if it is not running yet.
 
 Or manually:
 
@@ -37,7 +39,9 @@ docker-compose ps
 
 ### 3. Run the API
 
-Option A — script (loads `.env.local` automatically):
+**Requires Docker to be running** (Docker Desktop or Colima).
+
+Option A — script (loads `.env.local`, starts DB, runs API):
 
 ```bash
 chmod +x scripts/run-local.sh
