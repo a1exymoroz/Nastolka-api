@@ -24,6 +24,9 @@ public class Game {
     @Column(nullable = false, length = 2048)
     private String photo;
 
+    @Column(unique = true)
+    private Long bggId;
+
     public Game() {
     }
 
@@ -57,5 +60,13 @@ public class Game {
 
     public void setPhoto(String photo) {
         this.photo = photo;
+    }
+
+    public Long getBggId() {
+        return bggId;
+    }
+
+    public void setBggId(Long bggId) {
+        this.bggId = bggId;
     }
 }

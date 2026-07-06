@@ -3,6 +3,7 @@ package com.nastolka.dto;
 public class GameResponse {
 
     private Long id;
+    private Long bggId;
     private String name;
     private String description;
     private String photo;
@@ -20,6 +21,14 @@ public class GameResponse {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Long getBggId() {
+        return bggId;
+    }
+
+    public void setBggId(Long bggId) {
+        this.bggId = bggId;
     }
 
     public String getName() {
@@ -48,12 +57,18 @@ public class GameResponse {
 
     public static class Builder {
         private Long id;
+        private Long bggId;
         private String name;
         private String description;
         private String photo;
 
         public Builder id(Long id) {
             this.id = id;
+            return this;
+        }
+
+        public Builder bggId(Long bggId) {
+            this.bggId = bggId;
             return this;
         }
 
@@ -75,6 +90,7 @@ public class GameResponse {
         public GameResponse build() {
             GameResponse response = new GameResponse();
             response.id = id;
+            response.bggId = bggId;
             response.name = name;
             response.description = description;
             response.photo = photo;

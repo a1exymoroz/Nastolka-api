@@ -14,7 +14,9 @@ Backend API for a board game application — a Spring Boot learning project.
 
 ### 1. Environment
 
-Credentials live in `.env.local` (gitignored). Create it with your database and JWT settings (see existing `.env.local` in the repo if present, or ask a teammate).
+Credentials live in `.env.local` (gitignored). Create it with your database, JWT, and BGG settings.
+
+For BoardGameGeek import/search, register an app at [boardgamegeek.com/applications](https://boardgamegeek.com/applications) and set `BGG_TOKEN` in `.env.local`.
 
 ### 2. Start PostgreSQL
 
@@ -98,11 +100,23 @@ src/main/java/com/nastolka/
 
 ## Endpoints
 
-| Method | Path               | Auth     | Description          |
-|--------|--------------------|----------|----------------------|
-| POST   | /api/auth/register | Public   | Register a new user  |
-| POST   | /api/auth/login    | Public   | Login and get JWT    |
-| GET    | /api/games         | Required | List available games |
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| POST | /api/auth/register | Public | Register a new user |
+| POST | /api/auth/login | Public | Login and get JWT |
+| GET | /api/games | Required | List all games |
+| POST | /api/games | Required | Create a game manually |
+| GET | /api/games/search-external?query=catan | Required | Search BoardGameGeek |
+| POST | /api/games/import/{bggId} | Required | Import game from BGG into DB |
+
+## BoardGameGeek import
+
+1. Get a token at [boardgamegeek.com/applications](https://boardgamegeek.com/applications)
+2. Add to `.env.local`: `BGG_TOKEN=your-token`
+3. Restart the API
+4. In Postman: **Login** → **Search BGG** → **Import Game from BGG**
+
+BGG rate limit: ~1 request per 5 seconds (handled automatically).
 
 ## Postman
 
@@ -114,8 +128,9 @@ Import the files from `postman/` into Postman:
 Select the **Nastolka Local** environment, then:
 
 1. **Register** — creates a unique user and saves `token`
-2. **Get All Games** — uses Bearer `{{token}}`
-3. **Get All Games - No Token** / **Invalid Token** — expect 403 / 401
+2. **Search BGG** → **Import Game from BGG** — fetch real game data (needs `BGG_TOKEN`)
+3. **Get All Games** — uses Bearer `{{token}}`
+4. **Get All Games - No Token** / **Invalid Token** — expect 403 / 401
 
 ## Stop PostgreSQL
 

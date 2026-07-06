@@ -128,6 +128,104 @@
       "name": "Games",
       "item": [
         {
+          "name": "Search BGG (External)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    const results = pm.response.json();",
+                  "    pm.test('Response is JSON array', function () {",
+                  "        pm.expect(results).to.be.an('array');",
+                  "    });",
+                  "    if (results.length > 0) {",
+                  "        pm.environment.set('bggId', results[0].bggId);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/games/search-external?query=catan",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "games", "search-external"],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "catan"
+                }
+              ]
+            },
+            "description": "Search BoardGameGeek by name. Saves first result `bggId` to the environment.\n\nRequires `BGG_TOKEN` in `.env.local`."
+          },
+          "response": []
+        },
+        {
+          "name": "Import Game from BGG",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "    const json = pm.response.json();",
+                  "    pm.test('Response contains bggId', function () {",
+                  "        pm.expect(json.bggId).to.eql(Number(pm.environment.get('bggId')));",
+                  "    });",
+                  "    pm.environment.set('gameId', json.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/games/import/{{bggId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "games", "import", "{{bggId}}"]
+            },
+            "description": "Import a game from BoardGameGeek into your database.\n\nRun **Search BGG** first to set `{{bggId}}`, or use a known id (Catan = 13)."
+          },
+          "response": []
+        },
+        {
           "name": "Create Game",
           "event": [
             {
