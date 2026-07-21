@@ -18,6 +18,8 @@ import java.util.List;
 @Service
 public class GameServiceImpl implements GameService {
 
+    private static final String BGG_GAME_URL_TEMPLATE = "https://boardgamegeek.com/boardgame/%d";
+
     private final GameRepository gameRepository;
     private final BggClient bggClient;
 
@@ -90,6 +92,7 @@ public class GameServiceImpl implements GameService {
                 .name(game.getName())
                 .description(game.getDescription())
                 .photo(game.getPhoto())
+                .bggUrl(game.getBggId() != null ? BGG_GAME_URL_TEMPLATE.formatted(game.getBggId()) : null)
                 .build();
     }
 }

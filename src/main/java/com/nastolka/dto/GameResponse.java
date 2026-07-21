@@ -7,6 +7,7 @@ public class GameResponse {
     private String name;
     private String description;
     private String photo;
+    private String bggUrl;
 
     public GameResponse() {
     }
@@ -55,12 +56,21 @@ public class GameResponse {
         this.photo = photo;
     }
 
+    public String getBggUrl() {
+        return bggUrl;
+    }
+
+    public void setBggUrl(String bggUrl) {
+        this.bggUrl = bggUrl;
+    }
+
     public static class Builder {
         private Long id;
         private Long bggId;
         private String name;
         private String description;
         private String photo;
+        private String bggUrl;
 
         public Builder id(Long id) {
             this.id = id;
@@ -87,6 +97,11 @@ public class GameResponse {
             return this;
         }
 
+        public Builder bggUrl(String bggUrl) {
+            this.bggUrl = bggUrl;
+            return this;
+        }
+
         public GameResponse build() {
             GameResponse response = new GameResponse();
             response.id = id;
@@ -94,6 +109,7 @@ public class GameResponse {
             response.name = name;
             response.description = description;
             response.photo = photo;
+            response.bggUrl = bggUrl;
             return response;
         }
     }
