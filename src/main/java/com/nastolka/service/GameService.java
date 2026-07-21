@@ -10,6 +10,8 @@ public interface GameService {
 
     List<GameResponse> getAllGames();
 
+    GameResponse getGameById(Long id);
+
     GameResponse createGame(CreateGameRequest request);
 
     List<BggSearchResult> searchExternal(String query);

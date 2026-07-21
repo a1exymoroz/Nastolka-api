@@ -34,6 +34,13 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
+    public GameResponse getGameById(Long id) {
+        Game game = gameRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Game not found"));
+        return toResponse(game);
+    }
+
+    @Override
     public GameResponse createGame(CreateGameRequest request) {
         Game game = new Game();
         game.setName(request.getName());

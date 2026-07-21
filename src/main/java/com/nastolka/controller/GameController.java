@@ -33,6 +33,12 @@ public class GameController {
         return ResponseEntity.ok(games);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<GameResponse> getGameById(@PathVariable Long id) {
+        GameResponse game = gameService.getGameById(id);
+        return ResponseEntity.ok(game);
+    }
+
     @GetMapping("/search-external")
     public ResponseEntity<List<BggSearchResult>> searchExternal(@RequestParam String query) {
         List<BggSearchResult> results = gameService.searchExternal(query);
