@@ -2,6 +2,8 @@ package com.nastolka.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -24,14 +26,19 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role = Role.USER;
+
     public User() {
     }
 
-    public User(Long id, String username, String password, String email) {
+    public User(Long id, String username, String password, String email, Role role) {
         this.id = id;
         this.username = username;
         this.password = password;
         this.email = email;
+        this.role = role;
     }
 
     public static Builder builder() {
@@ -70,11 +77,20 @@ public class User {
         this.email = email;
     }
 
+    public Role getRole() {
+        return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
+    }
+
     public static class Builder {
         private Long id;
         private String username;
         private String password;
         private String email;
+        private Role role = Role.USER;
 
         public Builder id(Long id) {
             this.id = id;
@@ -96,8 +112,13 @@ public class User {
             return this;
         }
 
+        public Builder role(Role role) {
+            this.role = role;
+            return this;
+        }
+
         public User build() {
-            return new User(id, username, password, email);
+            return new User(id, username, password, email, role);
         }
     }
 }
