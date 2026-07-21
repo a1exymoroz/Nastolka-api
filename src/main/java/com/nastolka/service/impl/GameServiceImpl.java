@@ -19,6 +19,7 @@ import java.util.List;
 public class GameServiceImpl implements GameService {
 
     private static final String BGG_GAME_URL_TEMPLATE = "https://boardgamegeek.com/boardgame/%d";
+    private static final int DESCRIPTION_MAX_LENGTH = 2000;
 
     private final GameRepository gameRepository;
     private final BggClient bggClient;
@@ -75,7 +76,7 @@ public class GameServiceImpl implements GameService {
         Game game = new Game();
         game.setBggId(details.bggId());
         game.setName(details.name());
-        game.setDescription(details.description());
+        game.setDescription(truncateDescription(details.description()));
         game.setPhoto(details.photo());
 
         return toResponse(gameRepository.save(game));
@@ -83,6 +84,13 @@ public class GameServiceImpl implements GameService {
 
     private BggSearchResult toSearchResult(BggSearchItem item) {
         return new BggSearchResult(item.bggId(), item.name(), item.yearPublished());
+    }
+
+    private String truncateDescription(String description) {
+        if (description == null || description.length() <= DESCRIPTION_MAX_LENGTH) {
+            return description;
+        }
+        return description.substring(0, DESCRIPTION_MAX_LENGTH);
     }
 
     private GameResponse toResponse(Game game) {

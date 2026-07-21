@@ -18,7 +18,7 @@ public class Game {
     @Column(nullable = false)
     private String name;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(length = 2000)
     private String description;
 
     @Column(nullable = false, length = 2048)
