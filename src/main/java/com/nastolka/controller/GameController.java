@@ -7,6 +7,7 @@ import com.nastolka.service.GameService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -55,5 +56,11 @@ public class GameController {
     public ResponseEntity<GameResponse> createGame(@Valid @RequestBody CreateGameRequest request) {
         GameResponse game = gameService.createGame(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(game);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteGame(@PathVariable Long id) {
+        gameService.deleteGame(id);
+        return ResponseEntity.noContent().build();
     }
 }

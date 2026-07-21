@@ -82,6 +82,14 @@ public class GameServiceImpl implements GameService {
         return toResponse(gameRepository.save(game));
     }
 
+    @Override
+    public void deleteGame(Long id) {
+        if (!gameRepository.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Game not found");
+        }
+        gameRepository.deleteById(id);
+    }
+
     private BggSearchResult toSearchResult(BggSearchItem item) {
         return new BggSearchResult(item.bggId(), item.name(), item.yearPublished());
     }

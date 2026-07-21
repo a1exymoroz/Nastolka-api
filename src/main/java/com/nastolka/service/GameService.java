@@ -17,4 +17,6 @@ public interface GameService {
     List<BggSearchResult> searchExternal(String query);
 
     GameResponse importFromBgg(Long bggId);
+
+    void deleteGame(Long id);
 }
