@@ -42,11 +42,12 @@ public class AuthServiceImpl implements AuthService {
         userService.save(user);
 
         String token = jwtUtil.generateToken(user.getUsername());
-    
+
 
         return AuthResponse.builder()
                 .token(token)
                 .username(user.getUsername())
+                .role(user.getRole())
                 .build();
     }
 
@@ -66,6 +67,7 @@ public class AuthServiceImpl implements AuthService {
         return AuthResponse.builder()
                 .token(token)
                 .username(user.getUsername())
+                .role(user.getRole())
                 .build();
     }
 }

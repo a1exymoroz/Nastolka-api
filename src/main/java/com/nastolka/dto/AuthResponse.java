@@ -1,16 +1,20 @@
 package com.nastolka.dto;
 
+import com.nastolka.entity.Role;
+
 public class AuthResponse {
 
     private String token;
     private String username;
+    private Role role;
 
     public AuthResponse() {
     }
 
-    public AuthResponse(String token, String username) {
+    public AuthResponse(String token, String username, Role role) {
         this.token = token;
         this.username = username;
+        this.role = role;
     }
 
     public static Builder builder() {
@@ -33,9 +37,18 @@ public class AuthResponse {
         this.username = username;
     }
 
+    public Role getRole() {
+        return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
+    }
+
     public static class Builder {
         private String token;
         private String username;
+        private Role role;
 
         public Builder token(String token) {
             this.token = token;
@@ -47,8 +60,13 @@ public class AuthResponse {
             return this;
         }
 
+        public Builder role(Role role) {
+            this.role = role;
+            return this;
+        }
+
         public AuthResponse build() {
-            return new AuthResponse(token, username);
+            return new AuthResponse(token, username, role);
         }
     }
 }

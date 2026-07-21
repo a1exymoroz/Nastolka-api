@@ -8,6 +8,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.ColumnDefault;
 
 @Entity
 @Table(name = "users")
@@ -27,6 +28,7 @@ public class User {
     private String email;
 
     @Enumerated(EnumType.STRING)
+    @ColumnDefault("'USER'")
     @Column(nullable = false)
     private Role role = Role.USER;
 
