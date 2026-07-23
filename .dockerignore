@@ -1,0 +1,9 @@
+target/
+uploads/
+.idea/
+*.iml
+.env.local
+docker-compose.yml
+docs/
+postman/
+README.md
