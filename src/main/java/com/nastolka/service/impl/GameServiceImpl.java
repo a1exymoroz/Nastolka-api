@@ -78,6 +78,10 @@ public class GameServiceImpl implements GameService {
         game.setName(details.name());
         game.setDescription(truncateDescription(details.description()));
         game.setPhoto(details.photo());
+        game.setMinPlayers(details.minPlayers());
+        game.setMaxPlayers(details.maxPlayers());
+        game.setMinPlayTime(details.minPlayTime());
+        game.setMaxPlayTime(details.maxPlayTime());
 
         return toResponse(gameRepository.save(game));
     }
@@ -91,7 +95,7 @@ public class GameServiceImpl implements GameService {
     }
 
     private BggSearchResult toSearchResult(BggSearchItem item) {
-        return new BggSearchResult(item.bggId(), item.name(), item.yearPublished());
+        return new BggSearchResult(item.bggId(), item.name(), item.yearPublished(), item.expansion());
     }
 
     private String truncateDescription(String description) {
@@ -109,6 +113,19 @@ public class GameServiceImpl implements GameService {
                 .description(game.getDescription())
                 .photo(game.getPhoto())
                 .bggUrl(game.getBggId() != null ? BGG_GAME_URL_TEMPLATE.formatted(game.getBggId()) : null)
+                .players(formatRange(game.getMinPlayers(), game.getMaxPlayers(), "player", "players"))
+                .duration(formatRange(game.getMinPlayTime(), game.getMaxPlayTime(), "min", "min"))
                 .build();
+    }
+
+    private String formatRange(Integer min, Integer max, String singularSuffix, String pluralSuffix) {
+        if (min == null && max == null) {
+            return null;
+        }
+        if (min == null || max == null || min.equals(max)) {
+            int value = min != null ? min : max;
+            return value + " " + (value == 1 ? singularSuffix : pluralSuffix);
+        }
+        return min + "-" + max + " " + pluralSuffix;
     }
 }

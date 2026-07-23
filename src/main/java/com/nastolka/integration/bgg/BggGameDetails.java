@@ -4,6 +4,10 @@ public record BggGameDetails(
         Long bggId,
         String name,
         String description,
-        String photo
+        String photo,
+        Integer minPlayers,
+        Integer maxPlayers,
+        Integer minPlayTime,
+        Integer maxPlayTime
 ) {
 }

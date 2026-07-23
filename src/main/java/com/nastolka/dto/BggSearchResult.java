@@ -5,14 +5,16 @@ public class BggSearchResult {
     private Long bggId;
     private String name;
     private Integer yearPublished;
+    private boolean expansion;
 
     public BggSearchResult() {
     }
 
-    public BggSearchResult(Long bggId, String name, Integer yearPublished) {
+    public BggSearchResult(Long bggId, String name, Integer yearPublished, boolean expansion) {
         this.bggId = bggId;
         this.name = name;
         this.yearPublished = yearPublished;
+        this.expansion = expansion;
     }
 
     public Long getBggId() {
@@ -37,5 +39,13 @@ public class BggSearchResult {
 
     public void setYearPublished(Integer yearPublished) {
         this.yearPublished = yearPublished;
+    }
+
+    public boolean isExpansion() {
+        return expansion;
+    }
+
+    public void setExpansion(boolean expansion) {
+        this.expansion = expansion;
     }
 }

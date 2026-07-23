@@ -46,7 +46,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.DELETE, "/api/games/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/games/import/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/games/*/expansions/import/**").hasRole("ADMIN")
                         .requestMatchers("/api/games/**").authenticated()
+                        .requestMatchers("/api/locations/**").authenticated()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 

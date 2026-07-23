@@ -1,21 +1,16 @@
 package com.nastolka.dto;
 
-import java.util.List;
-
-public class GameResponse {
+public class ExpansionResponse {
 
     private Long id;
+    private Long gameId;
     private Long bggId;
     private String name;
     private String description;
     private String photo;
     private String bggUrl;
-    private String players;
-    private String duration;
-    private List<ExpansionResponse> expansions;
-    private List<ExpansionResponse> catalogExpansions;
 
-    public GameResponse() {
+    public ExpansionResponse() {
     }
 
     public static Builder builder() {
@@ -28,6 +23,14 @@ public class GameResponse {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Long getGameId() {
+        return gameId;
+    }
+
+    public void setGameId(Long gameId) {
+        this.gameId = gameId;
     }
 
     public Long getBggId() {
@@ -70,52 +73,22 @@ public class GameResponse {
         this.bggUrl = bggUrl;
     }
 
-    public String getPlayers() {
-        return players;
-    }
-
-    public void setPlayers(String players) {
-        this.players = players;
-    }
-
-    public String getDuration() {
-        return duration;
-    }
-
-    public void setDuration(String duration) {
-        this.duration = duration;
-    }
-
-    public List<ExpansionResponse> getExpansions() {
-        return expansions;
-    }
-
-    public void setExpansions(List<ExpansionResponse> expansions) {
-        this.expansions = expansions;
-    }
-
-    public List<ExpansionResponse> getCatalogExpansions() {
-        return catalogExpansions;
-    }
-
-    public void setCatalogExpansions(List<ExpansionResponse> catalogExpansions) {
-        this.catalogExpansions = catalogExpansions;
-    }
-
     public static class Builder {
         private Long id;
+        private Long gameId;
         private Long bggId;
         private String name;
         private String description;
         private String photo;
         private String bggUrl;
-        private String players;
-        private String duration;
-        private List<ExpansionResponse> expansions;
-        private List<ExpansionResponse> catalogExpansions;
 
         public Builder id(Long id) {
             this.id = id;
+            return this;
+        }
+
+        public Builder gameId(Long gameId) {
+            this.gameId = gameId;
             return this;
         }
 
@@ -144,38 +117,15 @@ public class GameResponse {
             return this;
         }
 
-        public Builder players(String players) {
-            this.players = players;
-            return this;
-        }
-
-        public Builder duration(String duration) {
-            this.duration = duration;
-            return this;
-        }
-
-        public Builder expansions(List<ExpansionResponse> expansions) {
-            this.expansions = expansions;
-            return this;
-        }
-
-        public Builder catalogExpansions(List<ExpansionResponse> catalogExpansions) {
-            this.catalogExpansions = catalogExpansions;
-            return this;
-        }
-
-        public GameResponse build() {
-            GameResponse response = new GameResponse();
+        public ExpansionResponse build() {
+            ExpansionResponse response = new ExpansionResponse();
             response.id = id;
+            response.gameId = gameId;
             response.bggId = bggId;
             response.name = name;
             response.description = description;
             response.photo = photo;
             response.bggUrl = bggUrl;
-            response.players = players;
-            response.duration = duration;
-            response.expansions = expansions;
-            response.catalogExpansions = catalogExpansions;
             return response;
         }
     }

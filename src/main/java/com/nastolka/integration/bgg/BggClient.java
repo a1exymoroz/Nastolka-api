@@ -37,7 +37,7 @@ public class BggClient {
         String xml = get(uriBuilder -> uriBuilder
                 .path("/search")
                 .queryParam("query", query)
-                .queryParam("type", "boardgame")
+                .queryParam("type", "boardgame,boardgameexpansion")
                 .build());
         return xmlParser.parseSearchResults(xml);
     }

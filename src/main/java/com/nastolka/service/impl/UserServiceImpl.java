@@ -5,6 +5,7 @@ import com.nastolka.repository.UserRepository;
 import com.nastolka.service.UserService;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -35,5 +36,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public boolean existsByEmail(String email) {
         return userRepository.existsByEmail(email);
+    }
+
+    @Override
+    public List<User> search(String query) {
+        return userRepository.findTop20ByUsernameContainingIgnoreCase(query);
     }
 }

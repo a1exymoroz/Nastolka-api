@@ -25,7 +25,8 @@ public class BggXmlParser {
 
         for (int i = 0; i < items.getLength(); i++) {
             Element item = (Element) items.item(i);
-            if (!"boardgame".equals(item.getAttribute("type"))) {
+            String type = item.getAttribute("type");
+            if (!"boardgame".equals(type) && !"boardgameexpansion".equals(type)) {
                 continue;
             }
 
@@ -35,7 +36,7 @@ public class BggXmlParser {
                     .flatMap(this::parseInteger)
                     .orElse(null);
 
-            results.add(new BggSearchItem(bggId, name, year));
+            results.add(new BggSearchItem(bggId, name, year, "boardgameexpansion".equals(type)));
         }
 
         return results;
@@ -54,7 +55,19 @@ public class BggXmlParser {
                 .or(() -> getTextContent(item, "thumbnail"))
                 .orElse(PLACEHOLDER_PHOTO);
 
-        return new BggGameDetails(bggId, name, description, photo);
+        Integer minPlayers = getPositiveInt(item, "minplayers");
+        Integer maxPlayers = getPositiveInt(item, "maxplayers");
+        Integer minPlayTime = getPositiveInt(item, "minplaytime");
+        Integer maxPlayTime = getPositiveInt(item, "maxplaytime");
+
+        return new BggGameDetails(bggId, name, description, photo, minPlayers, maxPlayers, minPlayTime, maxPlayTime);
+    }
+
+    private Integer getPositiveInt(Element item, String tag) {
+        return getChildAttribute(item, tag, "value")
+                .flatMap(this::parseInteger)
+                .filter(value -> value > 0)
+                .orElse(null);
     }
 
     private Document parse(String xml) {

@@ -5,15 +5,24 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
-@Table(name = "games")
-public class Game {
+@Table(name = "game_expansions")
+public class GameExpansion {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "game_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private Game game;
 
     @Column(nullable = false)
     private String name;
@@ -27,15 +36,7 @@ public class Game {
     @Column(unique = true)
     private Long bggId;
 
-    private Integer minPlayers;
-
-    private Integer maxPlayers;
-
-    private Integer minPlayTime;
-
-    private Integer maxPlayTime;
-
-    public Game() {
+    public GameExpansion() {
     }
 
     public Long getId() {
@@ -44,6 +45,14 @@ public class Game {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Game getGame() {
+        return game;
+    }
+
+    public void setGame(Game game) {
+        this.game = game;
     }
 
     public String getName() {
@@ -76,37 +85,5 @@ public class Game {
 
     public void setBggId(Long bggId) {
         this.bggId = bggId;
-    }
-
-    public Integer getMinPlayers() {
-        return minPlayers;
-    }
-
-    public void setMinPlayers(Integer minPlayers) {
-        this.minPlayers = minPlayers;
-    }
-
-    public Integer getMaxPlayers() {
-        return maxPlayers;
-    }
-
-    public void setMaxPlayers(Integer maxPlayers) {
-        this.maxPlayers = maxPlayers;
-    }
-
-    public Integer getMinPlayTime() {
-        return minPlayTime;
-    }
-
-    public void setMinPlayTime(Integer minPlayTime) {
-        this.minPlayTime = minPlayTime;
-    }
-
-    public Integer getMaxPlayTime() {
-        return maxPlayTime;
-    }
-
-    public void setMaxPlayTime(Integer maxPlayTime) {
-        this.maxPlayTime = maxPlayTime;
     }
 }
