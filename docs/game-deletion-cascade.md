@@ -32,30 +32,29 @@ Deleting a game therefore also removes: its expansions, every location's copy
 of the game, every location-specific expansion pairing, all play history for
 that game, and all player placements/points tied to that history.
 
-## The gotcha: `ddl-auto=update`
+## The gotcha: schema changes need a migration now
 
-`application-local.properties` sets `spring.jpa.hibernate.ddl-auto=update`.
-Update mode adds missing tables and columns, but it will **not** retroactively
-add `ON DELETE CASCADE` to a foreign key that already exists without it. So:
+Schema is managed by Flyway (`src/main/resources/db/migration`), not
+`spring.jpa.hibernate.ddl-auto` (now `validate`, which only checks entities
+against the live schema and never alters it). So:
 
-- If the tables don't exist yet, Hibernate creates them fresh with the cascade
-  constraint baked in — deleting a game just works.
-- If the tables were already created by an earlier run of the app (before the
-  `@OnDelete` annotations existed on these entities), the live foreign keys
-  may lack `ON DELETE CASCADE`. In that case `DELETE FROM games` fails with a
-  foreign-key violation instead of cascading.
+- A fresh database gets the full schema, cascades included, from
+  `V1__baseline.sql` onward.
+- An existing database only picks up a constraint change (like adding
+  `ON DELETE CASCADE` to a foreign key that was created without it) if there's
+  a migration script for it. Nothing happens automatically anymore.
 
-`scripts/reset-games-table.sql` exists for exactly this situation — it drops
-and recreates `games`, `game_expansions`, `locations`, `location_games`,
-`location_game_expansions`, `location_shares`, `location_history`, and
-`location_history_players` with the foreign keys explicitly declared
-`ON DELETE CASCADE`. Run it if a game delete throws a constraint violation
-locally.
+`scripts/reset-games-table.sql` predates Flyway and drops/recreates the game
+and location tables from scratch with cascades baked in — it's a
+sledgehammer for local dev only (it deletes all data in those tables). Prefer
+adding a proper `V{n}__*.sql` migration under `db/migration` instead, even
+locally, so the fix is captured and replays on every environment.
 
 ## Takeaway
 
 `@OnDelete(action = OnDeleteAction.CASCADE)` is a DDL-time annotation, not a
-runtime cascade. It only changes behavior if Hibernate actually gets to
-(re)create the constraint — on a fresh schema or after a manual reset. It's
-worth checking column/constraint definitions directly (e.g. via
-`\d+ games` in `psql`) rather than assuming the annotation is in effect.
+runtime cascade. It only takes effect once the corresponding constraint is
+actually created in the database — which now means a Flyway migration, not a
+Hibernate auto-update. It's worth checking column/constraint definitions
+directly (e.g. via `\d+ games` in `psql`) rather than assuming the annotation
+is in effect.
