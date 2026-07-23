@@ -1,5 +1,7 @@
 package com.nastolka.integration.bgg;
 
+import java.util.List;
+
 public record BggGameDetails(
         Long bggId,
         String name,
@@ -8,6 +10,8 @@ public record BggGameDetails(
         Integer minPlayers,
         Integer maxPlayers,
         Integer minPlayTime,
-        Integer maxPlayTime
+        Integer maxPlayTime,
+        boolean expansion,
+        List<BggExpansionLink> expansions
 ) {
 }

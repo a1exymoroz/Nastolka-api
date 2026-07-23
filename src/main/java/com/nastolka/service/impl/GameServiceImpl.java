@@ -72,6 +72,11 @@ public class GameServiceImpl implements GameService {
         }
 
         BggGameDetails details = bggClient.getGameDetails(bggId);
+        if (details.expansion()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "BGG id %d is an expansion, not a base game. Import it via /api/games/{gameId}/expansions/import/%d instead."
+                            .formatted(bggId, bggId));
+        }
 
         Game game = new Game();
         game.setBggId(details.bggId());

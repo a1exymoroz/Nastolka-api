@@ -59,8 +59,27 @@ public class BggXmlParser {
         Integer maxPlayers = getPositiveInt(item, "maxplayers");
         Integer minPlayTime = getPositiveInt(item, "minplaytime");
         Integer maxPlayTime = getPositiveInt(item, "maxplaytime");
+        boolean expansion = "boardgameexpansion".equals(item.getAttribute("type"));
+        List<BggExpansionLink> expansions = getExpansionLinks(item);
 
-        return new BggGameDetails(bggId, name, description, photo, minPlayers, maxPlayers, minPlayTime, maxPlayTime);
+        return new BggGameDetails(
+                bggId, name, description, photo, minPlayers, maxPlayers, minPlayTime, maxPlayTime, expansion, expansions);
+    }
+
+    private List<BggExpansionLink> getExpansionLinks(Element item) {
+        List<BggExpansionLink> links = new ArrayList<>();
+        NodeList linkNodes = item.getElementsByTagName("link");
+        for (int i = 0; i < linkNodes.getLength(); i++) {
+            Element link = (Element) linkNodes.item(i);
+            if (!"boardgameexpansion".equals(link.getAttribute("type"))) {
+                continue;
+            }
+            if ("true".equals(link.getAttribute("inbound"))) {
+                continue;
+            }
+            links.add(new BggExpansionLink(Long.parseLong(link.getAttribute("id")), link.getAttribute("value")));
+        }
+        return links;
     }
 
     private Integer getPositiveInt(Element item, String tag) {

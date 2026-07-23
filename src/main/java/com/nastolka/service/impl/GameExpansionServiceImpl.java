@@ -1,10 +1,12 @@
 package com.nastolka.service.impl;
 
+import com.nastolka.dto.BggSearchResult;
 import com.nastolka.dto.CreateExpansionRequest;
 import com.nastolka.dto.ExpansionResponse;
 import com.nastolka.entity.Game;
 import com.nastolka.entity.GameExpansion;
 import com.nastolka.integration.bgg.BggClient;
+import com.nastolka.integration.bgg.BggExpansionLink;
 import com.nastolka.integration.bgg.BggGameDetails;
 import com.nastolka.repository.GameExpansionRepository;
 import com.nastolka.repository.GameRepository;
@@ -44,6 +46,21 @@ public class GameExpansionServiceImpl implements GameExpansionService {
     }
 
     @Override
+    public List<BggSearchResult> searchExternal(Long gameId) {
+        Game game = requireGame(gameId);
+        if (game.getBggId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Game was not imported from BoardGameGeek, so its official expansions are unknown");
+        }
+
+        BggGameDetails details = bggClient.getGameDetails(game.getBggId());
+        return details.expansions().stream()
+                .filter(link -> !expansionRepository.existsByBggId(link.bggId()))
+                .map(this::toSearchResult)
+                .toList();
+    }
+
+    @Override
     public ExpansionResponse createExpansion(Long gameId, CreateExpansionRequest request) {
         Game game = requireGame(gameId);
 
@@ -65,6 +82,11 @@ public class GameExpansionServiceImpl implements GameExpansionService {
         }
 
         BggGameDetails details = bggClient.getGameDetails(bggId);
+        if (!details.expansion()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "BGG id %d is a base game, not an expansion. Import it via /api/games/import/%d instead."
+                            .formatted(bggId, bggId));
+        }
 
         GameExpansion expansion = new GameExpansion();
         expansion.setGame(game);
@@ -87,6 +109,10 @@ public class GameExpansionServiceImpl implements GameExpansionService {
     private Game requireGame(Long gameId) {
         return gameRepository.findById(gameId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Game not found"));
+    }
+
+    private BggSearchResult toSearchResult(BggExpansionLink link) {
+        return new BggSearchResult(link.bggId(), link.name(), null, true);
     }
 
     private String truncateDescription(String description) {

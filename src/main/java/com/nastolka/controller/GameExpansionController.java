@@ -1,5 +1,6 @@
 package com.nastolka.controller;
 
+import com.nastolka.dto.BggSearchResult;
 import com.nastolka.dto.CreateExpansionRequest;
 import com.nastolka.dto.ExpansionResponse;
 import com.nastolka.service.GameExpansionService;
@@ -30,6 +31,12 @@ public class GameExpansionController {
     public ResponseEntity<List<ExpansionResponse>> getExpansions(@PathVariable Long gameId) {
         List<ExpansionResponse> expansions = expansionService.getExpansions(gameId);
         return ResponseEntity.ok(expansions);
+    }
+
+    @GetMapping("/search-external")
+    public ResponseEntity<List<BggSearchResult>> searchExternal(@PathVariable Long gameId) {
+        List<BggSearchResult> results = expansionService.searchExternal(gameId);
+        return ResponseEntity.ok(results);
     }
 
     @PostMapping
