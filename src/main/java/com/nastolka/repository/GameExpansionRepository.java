@@ -16,5 +16,7 @@ public interface GameExpansionRepository extends JpaRepository<GameExpansion, Lo
 
     Optional<GameExpansion> findByIdAndGameId(Long id, Long gameId);
 
+    Optional<GameExpansion> findByBggId(Long bggId);
+
     boolean existsByBggId(Long bggId);
 }

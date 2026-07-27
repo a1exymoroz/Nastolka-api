@@ -10,5 +10,7 @@ public interface LocationGameExpansionService {
 
     ExpansionResponse addExpansion(Long locationId, Long gameId, Long expansionId, String username);
 
+    ExpansionResponse importExpansion(Long locationId, Long gameId, Long bggId, String username);
+
     void removeExpansion(Long locationId, Long gameId, Long expansionId, String username);
 }

@@ -92,6 +92,13 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
+    public GameResponse getOrImportByBggId(Long bggId) {
+        return gameRepository.findByBggId(bggId)
+                .map(this::toResponse)
+                .orElseGet(() -> importFromBgg(bggId));
+    }
+
+    @Override
     public void deleteGame(Long id) {
         if (!gameRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Game not found");

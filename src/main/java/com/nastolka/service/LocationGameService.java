@@ -10,5 +10,7 @@ public interface LocationGameService {
 
     GameResponse addGame(Long locationId, Long gameId, String username);
 
+    GameResponse importGame(Long locationId, Long bggId, String username);
+
     void removeGame(Long locationId, Long gameId, String username);
 }

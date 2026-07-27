@@ -13,6 +13,7 @@ import com.nastolka.repository.GameRepository;
 import com.nastolka.repository.LocationGameExpansionRepository;
 import com.nastolka.repository.LocationGameRepository;
 import com.nastolka.repository.LocationRepository;
+import com.nastolka.service.GameService;
 import com.nastolka.service.LocationGameService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,7 @@ public class LocationGameServiceImpl implements LocationGameService {
     private final LocationGameRepository locationGameRepository;
     private final LocationGameExpansionRepository locationGameExpansionRepository;
     private final GameExpansionRepository gameExpansionRepository;
+    private final GameService gameService;
     private final LocationAccessGuard accessGuard;
 
     public LocationGameServiceImpl(
@@ -40,6 +42,7 @@ public class LocationGameServiceImpl implements LocationGameService {
             LocationGameRepository locationGameRepository,
             LocationGameExpansionRepository locationGameExpansionRepository,
             GameExpansionRepository gameExpansionRepository,
+            GameService gameService,
             LocationAccessGuard accessGuard
     ) {
         this.locationRepository = locationRepository;
@@ -47,6 +50,7 @@ public class LocationGameServiceImpl implements LocationGameService {
         this.locationGameRepository = locationGameRepository;
         this.locationGameExpansionRepository = locationGameExpansionRepository;
         this.gameExpansionRepository = gameExpansionRepository;
+        this.gameService = gameService;
         this.accessGuard = accessGuard;
     }
 
@@ -95,6 +99,29 @@ public class LocationGameServiceImpl implements LocationGameService {
         if (locationGameRepository.existsByLocationIdAndGameId(locationId, gameId)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Game already added to this location");
         }
+
+        LocationGame locationGame = new LocationGame();
+        locationGame.setLocation(location);
+        locationGame.setGame(game);
+        locationGameRepository.save(locationGame);
+
+        return toResponse(game, List.of(), List.of());
+    }
+
+    @Override
+    public GameResponse importGame(Long locationId, Long bggId, String username) {
+        User requester = accessGuard.requireUser(username);
+        Location location = requireLocation(locationId);
+        accessGuard.requireManageAccess(location, requester);
+
+        GameResponse imported = gameService.getOrImportByBggId(bggId);
+
+        if (locationGameRepository.existsByLocationIdAndGameId(locationId, imported.getId())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Game already added to this location");
+        }
+
+        Game game = gameRepository.findById(imported.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Game not found"));
 
         LocationGame locationGame = new LocationGame();
         locationGame.setLocation(location);

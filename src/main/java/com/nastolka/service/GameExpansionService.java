@@ -16,5 +16,7 @@ public interface GameExpansionService {
 
     ExpansionResponse importFromBgg(Long gameId, Long bggId);
 
+    ExpansionResponse getOrImportByBggId(Long gameId, Long bggId);
+
     void deleteExpansion(Long gameId, Long expansionId);
 }

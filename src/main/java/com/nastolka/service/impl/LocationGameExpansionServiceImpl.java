@@ -10,6 +10,7 @@ import com.nastolka.repository.GameExpansionRepository;
 import com.nastolka.repository.LocationGameExpansionRepository;
 import com.nastolka.repository.LocationGameRepository;
 import com.nastolka.repository.LocationRepository;
+import com.nastolka.service.GameExpansionService;
 import com.nastolka.service.LocationGameExpansionService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,7 @@ public class LocationGameExpansionServiceImpl implements LocationGameExpansionSe
     private final LocationGameRepository locationGameRepository;
     private final GameExpansionRepository expansionRepository;
     private final LocationGameExpansionRepository locationGameExpansionRepository;
+    private final GameExpansionService gameExpansionService;
     private final LocationAccessGuard accessGuard;
 
     public LocationGameExpansionServiceImpl(
@@ -33,12 +35,14 @@ public class LocationGameExpansionServiceImpl implements LocationGameExpansionSe
             LocationGameRepository locationGameRepository,
             GameExpansionRepository expansionRepository,
             LocationGameExpansionRepository locationGameExpansionRepository,
+            GameExpansionService gameExpansionService,
             LocationAccessGuard accessGuard
     ) {
         this.locationRepository = locationRepository;
         this.locationGameRepository = locationGameRepository;
         this.expansionRepository = expansionRepository;
         this.locationGameExpansionRepository = locationGameExpansionRepository;
+        this.gameExpansionService = gameExpansionService;
         this.accessGuard = accessGuard;
     }
 
@@ -72,6 +76,30 @@ public class LocationGameExpansionServiceImpl implements LocationGameExpansionSe
         if (locationGameExpansionRepository.existsByLocationGameIdAndExpansionId(locationGame.getId(), expansionId)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Expansion already added to this location");
         }
+
+        LocationGameExpansion locationGameExpansion = new LocationGameExpansion();
+        locationGameExpansion.setLocationGame(locationGame);
+        locationGameExpansion.setExpansion(expansion);
+        locationGameExpansionRepository.save(locationGameExpansion);
+
+        return toResponse(expansion);
+    }
+
+    @Override
+    public ExpansionResponse importExpansion(Long locationId, Long gameId, Long bggId, String username) {
+        User requester = accessGuard.requireUser(username);
+        Location location = requireLocation(locationId);
+        accessGuard.requireManageAccess(location, requester);
+
+        LocationGame locationGame = requireLocationGame(locationId, gameId);
+        ExpansionResponse imported = gameExpansionService.getOrImportByBggId(gameId, bggId);
+
+        if (locationGameExpansionRepository.existsByLocationGameIdAndExpansionId(locationGame.getId(), imported.getId())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Expansion already added to this location");
+        }
+
+        GameExpansion expansion = expansionRepository.findById(imported.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Expansion not found"));
 
         LocationGameExpansion locationGameExpansion = new LocationGameExpansion();
         locationGameExpansion.setLocationGame(locationGame);

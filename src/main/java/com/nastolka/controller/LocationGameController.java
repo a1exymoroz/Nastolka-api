@@ -42,6 +42,16 @@ public class LocationGameController {
         return ResponseEntity.status(HttpStatus.CREATED).body(game);
     }
 
+    @PostMapping("/import/{bggId}")
+    public ResponseEntity<GameResponse> importGame(
+            @PathVariable Long locationId,
+            @PathVariable Long bggId,
+            @AuthenticationPrincipal String username
+    ) {
+        GameResponse game = locationGameService.importGame(locationId, bggId, username);
+        return ResponseEntity.status(HttpStatus.CREATED).body(game);
+    }
+
     @DeleteMapping("/{gameId}")
     public ResponseEntity<Void> removeGame(
             @PathVariable Long locationId,

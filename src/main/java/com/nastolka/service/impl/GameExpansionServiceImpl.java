@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class GameExpansionServiceImpl implements GameExpansionService {
@@ -96,6 +97,22 @@ public class GameExpansionServiceImpl implements GameExpansionService {
         expansion.setPhoto(details.photo());
 
         return toResponse(expansionRepository.save(expansion));
+    }
+
+    @Override
+    public ExpansionResponse getOrImportByBggId(Long gameId, Long bggId) {
+        requireGame(gameId);
+
+        Optional<GameExpansion> existing = expansionRepository.findByBggId(bggId);
+        if (existing.isPresent()) {
+            GameExpansion expansion = existing.get();
+            if (!expansion.getGame().getId().equals(gameId)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Expansion does not belong to this game");
+            }
+            return toResponse(expansion);
+        }
+
+        return importFromBgg(gameId, bggId);
     }
 
     @Override

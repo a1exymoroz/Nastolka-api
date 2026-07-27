@@ -142,6 +142,7 @@ The JWT only carries the username (`sub` claim), issued-at, and expiry — signe
 | `DELETE /api/games/**` | `ROLE_ADMIN` |
 | `POST /api/games/import/**` | `ROLE_ADMIN` |
 | `POST /api/games/*/expansions/import/**` | `ROLE_ADMIN` |
+| `POST /api/locations/{id}/games/import/**`, `POST /api/locations/{id}/games/*/expansions/import/**` | Authenticated + location owner or `ROLE_ADMIN` (checked in service layer via `LocationAccessGuard`, not `SecurityConfig`) |
 | `/api/games/**`, `/api/locations/**` | Authenticated |
 | Everything else | Authenticated |
 
@@ -172,7 +173,7 @@ See [Game deletion cascade](game-deletion-cascade.md) for how a single `DELETE /
 | Auth | Bearer token (`app.bgg.token` / `BGG_TOKEN`) required per request; 503 if unset |
 | Rate limiting | `BggClient` enforces a 5s minimum interval between requests in-process (`synchronized`) |
 | Parsing | `BggXmlParser` — hand-rolled XML parsing into `BggSearchItem` / `BggGameDetails` / `BggExpansionLink` |
-| Use cases | `GET /api/games/search-external`, `POST /api/games/import/{bggId}` (ADMIN), same pattern for expansions |
+| Use cases | `GET /api/games/search-external`, `POST /api/games/import/{bggId}` (ADMIN), same pattern for expansions; `POST /api/locations/{id}/games/import/{bggId}` lets a location owner import-or-reuse a catalog game and attach it in one call, same pattern for expansions |
 | Errors | Upstream failures mapped to `502 Bad Gateway` via `ResponseStatusException` |
 
 ---

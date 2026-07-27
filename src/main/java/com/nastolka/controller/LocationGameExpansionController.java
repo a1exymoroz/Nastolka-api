@@ -44,6 +44,17 @@ public class LocationGameExpansionController {
         return ResponseEntity.status(HttpStatus.CREATED).body(expansion);
     }
 
+    @PostMapping("/import/{bggId}")
+    public ResponseEntity<ExpansionResponse> importExpansion(
+            @PathVariable Long locationId,
+            @PathVariable Long gameId,
+            @PathVariable Long bggId,
+            @AuthenticationPrincipal String username
+    ) {
+        ExpansionResponse expansion = expansionService.importExpansion(locationId, gameId, bggId, username);
+        return ResponseEntity.status(HttpStatus.CREATED).body(expansion);
+    }
+
     @DeleteMapping("/{expansionId}")
     public ResponseEntity<Void> removeExpansion(
             @PathVariable Long locationId,

@@ -18,5 +18,7 @@ public interface GameService {
 
     GameResponse importFromBgg(Long bggId);
 
+    GameResponse getOrImportByBggId(Long bggId);
+
     void deleteGame(Long id);
 }
