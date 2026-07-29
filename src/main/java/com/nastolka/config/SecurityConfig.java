@@ -44,6 +44,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/ws/**").permitAll()
                         .requestMatchers(HttpMethod.DELETE, "/api/games/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/games/import/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/games/*/expansions/import/**").hasRole("ADMIN")

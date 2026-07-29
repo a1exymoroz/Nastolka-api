@@ -24,12 +24,10 @@ import com.nastolka.repository.LocationHistoryRepository;
 import com.nastolka.repository.LocationRepository;
 import com.nastolka.repository.LocationShareRepository;
 import com.nastolka.repository.UserRepository;
-import com.nastolka.service.HistoryPhotoFile;
 import com.nastolka.service.LocationHistoryService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Duration;
@@ -55,7 +53,6 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
     private final HistoryExpansionRepository historyExpansionRepository;
     private final LocationShareRepository locationShareRepository;
     private final LocationAccessGuard accessGuard;
-    private final HistoryPhotoStorage photoStorage;
 
     public LocationHistoryServiceImpl(
             LocationRepository locationRepository,
@@ -68,8 +65,7 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
             LocationGameExpansionRepository locationGameExpansionRepository,
             HistoryExpansionRepository historyExpansionRepository,
             LocationShareRepository locationShareRepository,
-            LocationAccessGuard accessGuard,
-            HistoryPhotoStorage photoStorage
+            LocationAccessGuard accessGuard
     ) {
         this.locationRepository = locationRepository;
         this.gameRepository = gameRepository;
@@ -82,7 +78,6 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
         this.historyExpansionRepository = historyExpansionRepository;
         this.locationShareRepository = locationShareRepository;
         this.accessGuard = accessGuard;
-        this.photoStorage = photoStorage;
     }
 
     @Override
@@ -160,62 +155,7 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
         accessGuard.requireManageAccess(location, requester);
 
         LocationHistory history = requireHistory(locationId, historyId);
-        if (history.getPhoto() != null) {
-            photoStorage.delete(history.getPhoto());
-        }
         locationHistoryRepository.delete(history);
-    }
-
-    @Override
-    @Transactional
-    public HistoryResponse uploadPhoto(Long locationId, Long historyId, MultipartFile file, String username) {
-        User requester = accessGuard.requireUser(username);
-        Location location = requireLocation(locationId);
-        accessGuard.requireManageAccess(location, requester);
-
-        LocationHistory history = requireHistory(locationId, historyId);
-
-        String previousPhoto = history.getPhoto();
-        String filename = photoStorage.store(file);
-        history.setPhoto(filename);
-        locationHistoryRepository.save(history);
-
-        if (previousPhoto != null) {
-            photoStorage.delete(previousPhoto);
-        }
-
-        return toResponse(history);
-    }
-
-    @Override
-    @Transactional
-    public void deletePhoto(Long locationId, Long historyId, String username) {
-        User requester = accessGuard.requireUser(username);
-        Location location = requireLocation(locationId);
-        accessGuard.requireManageAccess(location, requester);
-
-        LocationHistory history = requireHistory(locationId, historyId);
-        if (history.getPhoto() == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "This history entry has no photo");
-        }
-
-        photoStorage.delete(history.getPhoto());
-        history.setPhoto(null);
-        locationHistoryRepository.save(history);
-    }
-
-    @Override
-    public HistoryPhotoFile getPhoto(Long locationId, Long historyId, String username) {
-        User requester = accessGuard.requireUser(username);
-        Location location = requireLocation(locationId);
-        accessGuard.requireViewAccess(location, requester);
-
-        LocationHistory history = requireHistory(locationId, historyId);
-        if (history.getPhoto() == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "This history entry has no photo");
-        }
-
-        return new HistoryPhotoFile(photoStorage.load(history.getPhoto()), photoStorage.contentTypeFor(history.getPhoto()));
     }
 
     private void savePlayers(LocationHistory history, List<PlayerPlacementRequest> playerRequests, boolean requireRanking) {
@@ -390,9 +330,6 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
                 .rating(history.getRating())
                 .players(players)
                 .expansions(expansions)
-                .photoUrl(history.getPhoto() != null
-                        ? "/api/locations/%d/history/%d/photo".formatted(history.getLocation().getId(), history.getId())
-                        : null)
                 .build();
     }
 

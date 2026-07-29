@@ -23,7 +23,6 @@ For the game deletion cascade behavior, see [Game deletion cascade](game-deletio
 | Connection pool | HikariCP (Spring Boot default) |
 | Migrations | Flyway (`flyway-core` + `flyway-database-postgresql`) |
 | External API | BoardGameGeek XML API v2 (`RestClient`) |
-| File storage | Local filesystem (history photo uploads) |
 | Local DB | Docker Compose (Postgres + Adminer) |
 | Production host | Render (Docker web service) |
 | Dev productivity | Spring Boot DevTools (hot reload) |
@@ -178,17 +177,13 @@ See [Game deletion cascade](game-deletion-cascade.md) for how a single `DELETE /
 
 ---
 
-## File storage stack
+## Location history photos
 
-| Piece | Technology |
-|-------|------------|
-| Storage | Local filesystem, directory from `app.upload.dir` / `UPLOAD_DIR` (default `uploads/history`) |
-| Component | `HistoryPhotoStorage` |
-| Constraints | Image content-types only; filenames are randomly generated (`UUID`); path traversal guarded by resolving against and checking `startsWith(root)` |
-| Limits | `spring.servlet.multipart.max-file-size` / `max-request-size` = 10MB |
-| Use case | One photo per `LocationHistory` play session (`POST/GET/DELETE /api/locations/{id}/history/{historyId}/photo`) |
-
-Uploaded files are **not** committed to the repo and are not backed by object storage — on Render's ephemeral filesystem this means photos don't survive a redeploy.
+Photo storage for location history entries lives outside this backend, in Netlify
+Blobs accessed via Netlify Functions in the frontend repo. Those functions
+authorize each request by calling this backend's `GET /api/locations/{locationId}`
+with the caller's bearer token and checking for a 200 response. This backend has
+no photo upload/storage code of its own.
 
 ---
 
@@ -203,7 +198,6 @@ Loaded from environment (`.env.local` for dev, Render env vars for prod), via Sp
 | `CORS_ALLOWED_ORIGINS` | Allowed frontend origin(s) |
 | `ADMIN_USERNAME`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` | `AdminUserSeeder` bootstrap |
 | `BGG_TOKEN`, `BGG_API_BASE_URL` | BoardGameGeek integration |
-| `UPLOAD_DIR` | History photo storage directory |
 | `SERVER_PORT` (local) / `PORT` (prod, Render-injected) | HTTP port |
 
 `application.properties` just selects the active profile; `application-local.properties` and `application-prod.properties` hold the actual values. Local uses a plain JDBC URL; prod appends `?sslmode=require`.

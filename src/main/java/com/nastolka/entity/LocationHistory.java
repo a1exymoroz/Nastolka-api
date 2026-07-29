@@ -48,9 +48,6 @@ public class LocationHistory {
 
     private Integer rating;
 
-    @Column(length = 255)
-    private String photo;
-
     public LocationHistory() {
     }
 
@@ -116,13 +113,5 @@ public class LocationHistory {
 
     public void setRating(Integer rating) {
         this.rating = rating;
-    }
-
-    public String getPhoto() {
-        return photo;
-    }
-
-    public void setPhoto(String photo) {
-        this.photo = photo;
     }
 }
