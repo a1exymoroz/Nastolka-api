@@ -11,5 +11,7 @@ public interface HistoryExpansionRepository extends JpaRepository<HistoryExpansi
 
     List<HistoryExpansion> findByHistoryId(Long historyId);
 
+    List<HistoryExpansion> findByHistoryIdIn(List<Long> historyIds);
+
     void deleteByHistoryId(Long historyId);
 }

@@ -22,6 +22,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private static final String BEARER_PREFIX = "Bearer ";
 
+    // Lets LocationAccessGuard reuse the User already loaded here instead of re-querying by username.
+    public static final String AUTHENTICATED_USER_ATTRIBUTE = "nastolka.authenticatedUser";
+
     private final JwtUtil jwtUtil;
     private final UserService userService;
 
@@ -69,6 +72,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 return;
             }
+
+            request.setAttribute(AUTHENTICATED_USER_ATTRIBUTE, user.get());
 
             List<SimpleGrantedAuthority> authorities =
                     List.of(new SimpleGrantedAuthority("ROLE_" + user.get().getRole().name()));

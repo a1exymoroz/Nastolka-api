@@ -34,8 +34,11 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class LocationHistoryServiceImpl implements LocationHistoryService {
@@ -86,8 +89,31 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
         Location location = requireLocation(locationId);
         accessGuard.requireViewAccess(location, requester);
 
-        return locationHistoryRepository.findByLocationIdOrderByPlayedAtDesc(locationId).stream()
-                .map(this::toResponse)
+        List<LocationHistory> historyEntries = locationHistoryRepository.findByLocationIdOrderByPlayedAtDesc(locationId);
+        if (historyEntries.isEmpty()) {
+            return List.of();
+        }
+        List<Long> historyIds = historyEntries.stream().map(LocationHistory::getId).toList();
+
+        Map<Long, List<PlayerResultResponse>> playersByHistoryId = historyPlayerRepository
+                .findByHistoryIdInOrderByPlacementAsc(historyIds).stream()
+                .collect(Collectors.groupingBy(
+                        historyPlayer -> historyPlayer.getHistory().getId(),
+                        LinkedHashMap::new,
+                        Collectors.mapping(this::toPlayerResponse, Collectors.toList())));
+
+        Map<Long, List<ExpansionResponse>> expansionsByHistoryId = historyExpansionRepository
+                .findByHistoryIdIn(historyIds).stream()
+                .collect(Collectors.groupingBy(
+                        historyExpansion -> historyExpansion.getHistory().getId(),
+                        LinkedHashMap::new,
+                        Collectors.mapping(he -> toExpansionResponse(he.getExpansion()), Collectors.toList())));
+
+        return historyEntries.stream()
+                .map(history -> toResponse(
+                        history,
+                        playersByHistoryId.getOrDefault(history.getId(), List.of()),
+                        expansionsByHistoryId.getOrDefault(history.getId(), List.of())))
                 .toList();
     }
 
@@ -301,21 +327,21 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
 
     private HistoryResponse toResponse(LocationHistory history) {
         List<PlayerResultResponse> players = historyPlayerRepository.findByHistoryIdOrderByPlacementAsc(history.getId()).stream()
-                .map(historyPlayer -> PlayerResultResponse.builder()
-                        .username(historyPlayer.getUser().getUsername())
-                        .placement(historyPlayer.getPlacement())
-                        .points(historyPlayer.getPoints())
-                        .build())
+                .map(this::toPlayerResponse)
                 .toList();
-
-        Long durationMinutes = (history.getStartedAt() != null && history.getFinishedAt() != null)
-                ? Duration.between(history.getStartedAt(), history.getFinishedAt()).toMinutes()
-                : null;
 
         List<ExpansionResponse> expansions = historyExpansionRepository.findByHistoryId(history.getId()).stream()
                 .map(HistoryExpansion::getExpansion)
                 .map(this::toExpansionResponse)
                 .toList();
+
+        return toResponse(history, players, expansions);
+    }
+
+    private HistoryResponse toResponse(LocationHistory history, List<PlayerResultResponse> players, List<ExpansionResponse> expansions) {
+        Long durationMinutes = (history.getStartedAt() != null && history.getFinishedAt() != null)
+                ? Duration.between(history.getStartedAt(), history.getFinishedAt()).toMinutes()
+                : null;
 
         return HistoryResponse.builder()
                 .id(history.getId())
@@ -330,6 +356,14 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
                 .rating(history.getRating())
                 .players(players)
                 .expansions(expansions)
+                .build();
+    }
+
+    private PlayerResultResponse toPlayerResponse(HistoryPlayer historyPlayer) {
+        return PlayerResultResponse.builder()
+                .username(historyPlayer.getUser().getUsername())
+                .placement(historyPlayer.getPlacement())
+                .points(historyPlayer.getPoints())
                 .build();
     }
 

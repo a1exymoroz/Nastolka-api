@@ -11,5 +11,7 @@ public interface HistoryPlayerRepository extends JpaRepository<HistoryPlayer, Lo
 
     List<HistoryPlayer> findByHistoryIdOrderByPlacementAsc(Long historyId);
 
+    List<HistoryPlayer> findByHistoryIdInOrderByPlacementAsc(List<Long> historyIds);
+
     void deleteByHistoryId(Long historyId);
 }
