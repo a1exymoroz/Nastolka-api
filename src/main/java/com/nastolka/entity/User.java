@@ -21,7 +21,7 @@ public class User {
     @Column(nullable = false, unique = true)
     private String username;
 
-    @Column(nullable = false)
+    @Column
     private String password;
 
     @Column(nullable = false, unique = true)
@@ -32,15 +32,19 @@ public class User {
     @Column(nullable = false)
     private Role role = Role.USER;
 
+    @Column(name = "google_sub", unique = true)
+    private String googleSub;
+
     public User() {
     }
 
-    public User(Long id, String username, String password, String email, Role role) {
+    public User(Long id, String username, String password, String email, Role role, String googleSub) {
         this.id = id;
         this.username = username;
         this.password = password;
         this.email = email;
         this.role = role;
+        this.googleSub = googleSub;
     }
 
     public static Builder builder() {
@@ -87,12 +91,21 @@ public class User {
         this.role = role;
     }
 
+    public String getGoogleSub() {
+        return googleSub;
+    }
+
+    public void setGoogleSub(String googleSub) {
+        this.googleSub = googleSub;
+    }
+
     public static class Builder {
         private Long id;
         private String username;
         private String password;
         private String email;
         private Role role = Role.USER;
+        private String googleSub;
 
         public Builder id(Long id) {
             this.id = id;
@@ -119,8 +132,13 @@ public class User {
             return this;
         }
 
+        public Builder googleSub(String googleSub) {
+            this.googleSub = googleSub;
+            return this;
+        }
+
         public User build() {
-            return new User(id, username, password, email, role);
+            return new User(id, username, password, email, role, googleSub);
         }
     }
 }
