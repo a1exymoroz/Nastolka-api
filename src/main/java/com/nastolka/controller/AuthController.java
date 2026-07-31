@@ -1,6 +1,7 @@
 package com.nastolka.controller;
 
 import com.nastolka.dto.AuthResponse;
+import com.nastolka.dto.GoogleLoginRequest;
 import com.nastolka.dto.LoginRequest;
 import com.nastolka.dto.RegisterRequest;
 import com.nastolka.service.AuthService;
@@ -31,6 +32,12 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         AuthResponse response = authService.login(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<AuthResponse> googleLogin(@Valid @RequestBody GoogleLoginRequest request) {
+        AuthResponse response = authService.googleLogin(request);
         return ResponseEntity.ok(response);
     }
 }

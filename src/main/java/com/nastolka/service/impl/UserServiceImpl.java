@@ -25,6 +25,16 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public Optional<User> findByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
+
+    @Override
+    public Optional<User> findByGoogleSub(String googleSub) {
+        return userRepository.findByGoogleSub(googleSub);
+    }
+
+    @Override
     public User save(User user) {
         return userRepository.save(user);
     }

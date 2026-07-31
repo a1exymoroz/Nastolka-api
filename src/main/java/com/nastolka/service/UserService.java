@@ -9,6 +9,10 @@ public interface UserService {
 
     Optional<User> findByUsername(String username);
 
+    Optional<User> findByEmail(String email);
+
+    Optional<User> findByGoogleSub(String googleSub);
+
     User save(User user);
 
     boolean existsByUsername(String username);

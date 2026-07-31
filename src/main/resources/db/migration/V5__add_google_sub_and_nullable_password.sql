@@ -1,0 +1,3 @@
+ALTER TABLE users
+    ALTER COLUMN password DROP NOT NULL,
+    ADD COLUMN google_sub VARCHAR(255) UNIQUE;
