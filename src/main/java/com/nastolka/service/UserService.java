@@ -15,5 +15,5 @@ public interface UserService {
 
     boolean existsByEmail(String email);
 
-    List<User> search(String query);
+    List<User> search(String query, String currentUsername);
 }
