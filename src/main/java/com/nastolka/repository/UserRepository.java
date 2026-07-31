@@ -1,5 +1,6 @@
 package com.nastolka.repository;
 
+import com.nastolka.entity.Role;
 import com.nastolka.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -19,4 +20,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByEmail(String email);
 
     List<User> findTop20ByUsernameContainingIgnoreCase(String query);
+
+    List<User> findTop20ByUsernameContainingIgnoreCaseAndUsernameNotAndRoleNot(
+            String query, String excludedUsername, Role role);
 }

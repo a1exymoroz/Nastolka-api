@@ -5,6 +5,7 @@ import com.nastolka.entity.User;
 import com.nastolka.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -24,12 +25,15 @@ public class UserController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<UserSearchResult>> search(@RequestParam String query) {
+    public ResponseEntity<List<UserSearchResult>> search(
+            @RequestParam String query,
+            @AuthenticationPrincipal String username
+    ) {
         if (query == null || query.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query must not be blank");
         }
 
-        List<UserSearchResult> results = userService.search(query.trim()).stream()
+        List<UserSearchResult> results = userService.search(query.trim(), username).stream()
                 .map(User::getUsername)
                 .map(UserSearchResult::new)
                 .toList();

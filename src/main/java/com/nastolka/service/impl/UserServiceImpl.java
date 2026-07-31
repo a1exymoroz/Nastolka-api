@@ -1,5 +1,6 @@
 package com.nastolka.service.impl;
 
+import com.nastolka.entity.Role;
 import com.nastolka.entity.User;
 import com.nastolka.repository.UserRepository;
 import com.nastolka.service.UserService;
@@ -39,7 +40,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<User> search(String query) {
-        return userRepository.findTop20ByUsernameContainingIgnoreCase(query);
+    public List<User> search(String query, String currentUsername) {
+        return userRepository.findTop20ByUsernameContainingIgnoreCaseAndUsernameNotAndRoleNot(
+                query, currentUsername, Role.ADMIN);
     }
 }
