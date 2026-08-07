@@ -156,7 +156,9 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
         saveExpansions(history, request.getExpansionIds());
 
         HistoryResponse response = toResponse(history);
-        telegramNotifier.notifyHistoryAdded(location, response);
+        if (response.getState() == HistoryState.FINISHED) {
+            telegramNotifier.notifyHistoryFinished(location, response);
+        }
         return response;
     }
 
@@ -168,6 +170,7 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
         accessGuard.requireManageAccess(location, requester);
 
         LocationHistory history = requireHistory(locationId, historyId);
+        HistoryState previousState = history.getState();
 
         Game game = resolveLocationGame(locationId, request.getGameId());
         history.setGame(game);
@@ -187,7 +190,11 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
         historyExpansionRepository.flush();
         saveExpansions(history, request.getExpansionIds());
 
-        return toResponse(history);
+        HistoryResponse response = toResponse(history);
+        if (previousState != HistoryState.FINISHED && response.getState() == HistoryState.FINISHED) {
+            telegramNotifier.notifyHistoryFinished(location, response);
+        }
+        return response;
     }
 
     @Override
