@@ -118,6 +118,18 @@ src/main/java/com/nastolka/
 
 BGG rate limit: ~1 request per 5 seconds (handled automatically).
 
+## Telegram notifications
+
+Each location can be linked to a Telegram chat that gets notified whenever a new history entry is logged for it.
+
+1. Create a bot via [@BotFather](https://t.me/BotFather) and copy the token it gives you.
+2. Add to `.env.local`: `TELEGRAM_BOT_TOKEN=your-token`
+3. Add the bot to the Telegram group (or start a DM with it) you want notified, then send it any message.
+4. Visit `https://api.telegram.org/bot<token>/getUpdates` in a browser and read the `chat.id` value from the response (negative for groups).
+5. Set that value as `telegramChatId` on the location via `PUT /api/locations/{id}`.
+
+If `TELEGRAM_BOT_TOKEN` is unset, or a location has no `telegramChatId`, history creation still works — notifications are just skipped silently.
+
 ## Postman
 
 Import the files from `postman/` into Postman:
@@ -171,6 +183,7 @@ The API runs on [Northflank](https://northflank.com/)'s free tier (always-on, no
    ADMIN_PASSWORD=...
    BGG_TOKEN=...
    BGG_API_BASE_URL=https://boardgamegeek.com/xmlapi2
+   TELEGRAM_BOT_TOKEN=...
    ```
 
 After that, every merge to `main` triggers Northflank to rebuild the Dockerfile and redeploy automatically.

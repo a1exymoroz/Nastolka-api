@@ -78,6 +78,7 @@ public class LocationServiceImpl implements LocationService {
         location.setOwner(owner);
         location.setName(request.getName());
         location.setDescription(request.getDescription());
+        location.setTelegramChatId(request.getTelegramChatId());
 
         return toResponse(locationRepository.save(location));
     }
@@ -90,6 +91,7 @@ public class LocationServiceImpl implements LocationService {
 
         location.setName(request.getName());
         location.setDescription(request.getDescription());
+        location.setTelegramChatId(request.getTelegramChatId());
 
         return toResponse(locationRepository.save(location));
     }
@@ -113,6 +115,7 @@ public class LocationServiceImpl implements LocationService {
                 .name(location.getName())
                 .description(location.getDescription())
                 .ownerUsername(location.getOwner().getUsername())
+                .telegramChatId(location.getTelegramChatId())
                 .build();
     }
 }

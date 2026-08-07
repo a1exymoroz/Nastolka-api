@@ -14,6 +14,7 @@ import com.nastolka.entity.Location;
 import com.nastolka.entity.LocationGame;
 import com.nastolka.entity.LocationHistory;
 import com.nastolka.entity.User;
+import com.nastolka.integration.telegram.TelegramNotifier;
 import com.nastolka.repository.GameExpansionRepository;
 import com.nastolka.repository.GameRepository;
 import com.nastolka.repository.HistoryExpansionRepository;
@@ -56,6 +57,7 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
     private final HistoryExpansionRepository historyExpansionRepository;
     private final LocationShareRepository locationShareRepository;
     private final LocationAccessGuard accessGuard;
+    private final TelegramNotifier telegramNotifier;
 
     public LocationHistoryServiceImpl(
             LocationRepository locationRepository,
@@ -68,7 +70,8 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
             LocationGameExpansionRepository locationGameExpansionRepository,
             HistoryExpansionRepository historyExpansionRepository,
             LocationShareRepository locationShareRepository,
-            LocationAccessGuard accessGuard
+            LocationAccessGuard accessGuard,
+            TelegramNotifier telegramNotifier
     ) {
         this.locationRepository = locationRepository;
         this.gameRepository = gameRepository;
@@ -81,6 +84,7 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
         this.historyExpansionRepository = historyExpansionRepository;
         this.locationShareRepository = locationShareRepository;
         this.accessGuard = accessGuard;
+        this.telegramNotifier = telegramNotifier;
     }
 
     @Override
@@ -140,7 +144,9 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
         savePlayers(history, request.getPlayers(), request.getState() == HistoryState.FINISHED);
         saveExpansions(history, request.getExpansionIds());
 
-        return toResponse(history);
+        HistoryResponse response = toResponse(history);
+        telegramNotifier.notifyHistoryAdded(location, response);
+        return response;
     }
 
     @Override
