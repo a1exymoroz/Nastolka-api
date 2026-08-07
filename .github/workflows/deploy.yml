@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  PROJECT_ID: nastolka
+  SERVICE_ID: nastolka-api
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -39,6 +43,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push image
+        id: build
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -47,13 +52,10 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/nastolka-api:latest
             ghcr.io/${{ github.repository_owner }}/nastolka-api:${{ github.sha }}
 
-      - name: Deploy to VM
-        uses: appleboy/ssh-action@v1
+      - name: Deploy to Northflank
+        uses: northflank/deploy-to-northflank@v1
         with:
-          host: ${{ secrets.VM_HOST }}
-          username: ${{ secrets.VM_SSH_USER }}
-          key: ${{ secrets.VM_SSH_KEY }}
-          script: |
-            cd /opt/nastolka-api
-            docker compose pull app
-            docker compose up -d app
+          northflank-api-key: ${{ secrets.NORTHFLANK_API_KEY }}
+          project-id: ${{ env.PROJECT_ID }}
+          service-id: ${{ env.SERVICE_ID }}
+          image-path: ghcr.io/${{ github.repository_owner }}/nastolka-api:${{ github.sha }}

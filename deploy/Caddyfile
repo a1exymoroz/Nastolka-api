@@ -1,3 +1,0 @@
-nastolka-api.duckdns.org {
-    reverse_proxy app:8080
-}

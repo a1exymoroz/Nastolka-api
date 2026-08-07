@@ -146,19 +146,14 @@ docker-compose down -v
 
 ## Deployment
 
-The API runs on an Oracle Cloud "Always Free" Ampere A1 VM (Docker + [Caddy](https://caddyserver.com/) reverse proxy for automatic HTTPS), deployed automatically by [.github/workflows/deploy.yml](.github/workflows/deploy.yml) on every push to `main`. The database (Neon Postgres) is unaffected — only the API container moves.
+The API runs on [Northflank](https://northflank.com/)'s free tier (always-on, no idle sleep, automatic HTTPS on a `*.northflank.app` domain), deployed automatically by [.github/workflows/deploy.yml](.github/workflows/deploy.yml) on every push to `main`. The database (Neon Postgres) is unaffected — only the API container moves.
 
-### One-time VM setup
+### One-time Northflank setup
 
-1. Provision an Always Free `VM.Standard.A1.Flex` instance (Ubuntu 22.04/24.04) in Oracle Cloud, reserve a static public IP, and open ingress on TCP 80/443 in the instance's Security List/NSG.
-2. Point a free [DuckDNS](https://www.duckdns.org/) hostname at the VM's static IP, and update it in [deploy/Caddyfile](deploy/Caddyfile) if it differs from `nastolka-api.duckdns.org`.
-3. Copy the `deploy/` folder to the VM and run the bootstrap script once:
-   ```bash
-   scp -r deploy ubuntu@<VM_HOST>:~/nastolka-deploy
-   ssh ubuntu@<VM_HOST>
-   sudo bash ~/nastolka-deploy/bootstrap-vm.sh
-   ```
-4. Create `/opt/nastolka-api/.env` on the VM with the app's runtime config (never committed to git):
+1. Sign up at [northflank.com](https://northflank.com/) (no card required) and create a **Project** (e.g. `nastolka`).
+2. In that project, create a **Service** → Deployment → source **External Image**, image `ghcr.io/a1exymoroz/nastolka-api:latest` (the first push from CI will replace this). Leave the linked build service blank — GitHub Actions builds the image, Northflank just runs it.
+3. Under the service's **Networking**, add a public port mapping `8080 → HTTP/HTTPS` so Northflank issues a public URL with automatic TLS.
+4. Under the service's **Environment**, add the app's runtime variables (never committed to git):
    ```
    SPRING_PROFILES_ACTIVE=prod
    POSTGRES_HOST=...
@@ -176,7 +171,7 @@ The API runs on an Oracle Cloud "Always Free" Ampere A1 VM (Docker + [Caddy](htt
    BGG_TOKEN=...
    BGG_API_BASE_URL=https://boardgamegeek.com/xmlapi2
    ```
-5. `cd /opt/nastolka-api && docker compose up -d` to bring up the app + Caddy.
-6. In this repo's GitHub settings, add secrets `VM_HOST`, `VM_SSH_USER` (`ubuntu`), and `VM_SSH_KEY` (the private key matching the VM's authorized key), and make the `nastolka-api` GHCR package public so the VM can pull it without extra auth.
+5. Note the **Project ID** and **Service ID** (visible in the Northflank dashboard URL or service settings) and update `PROJECT_ID`/`SERVICE_ID` in [.github/workflows/deploy.yml](.github/workflows/deploy.yml) if they differ from `nastolka` / `nastolka-api`.
+6. Generate a Northflank API token with "Update Deployment" permission, then add it as the `NORTHFLANK_API_KEY` secret in this repo's GitHub settings. Also make the `nastolka-api` GHCR package public so Northflank can pull it without extra registry credentials.
 
-After that, every merge to `main` builds a new image, pushes it to GHCR, and SSHes into the VM to pull and restart the `app` container — Caddy and its TLS certificate are untouched.
+After that, every merge to `main` builds a new image, pushes it to GHCR, and tells Northflank to redeploy the service with that image.
