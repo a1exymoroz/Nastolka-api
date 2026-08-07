@@ -1,6 +1,8 @@
 package com.nastolka.integration.bgg;
 
+import com.nastolka.config.CacheConfig;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -33,6 +35,7 @@ public class BggClient {
         this.token = token;
     }
 
+    @Cacheable(cacheNames = CacheConfig.BGG_SEARCH_CACHE, key = "#query.trim().toLowerCase()")
     public List<BggSearchItem> search(String query) {
         String xml = get(uriBuilder -> uriBuilder
                 .path("/search")
@@ -42,6 +45,7 @@ public class BggClient {
         return xmlParser.parseSearchResults(xml);
     }
 
+    @Cacheable(cacheNames = CacheConfig.BGG_GAME_DETAILS_CACHE, key = "#bggId")
     public BggGameDetails getGameDetails(Long bggId) {
         String xml = get(uriBuilder -> uriBuilder
                 .path("/thing")
