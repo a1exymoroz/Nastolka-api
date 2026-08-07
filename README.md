@@ -146,14 +146,15 @@ docker-compose down -v
 
 ## Deployment
 
-The API runs on [Northflank](https://northflank.com/)'s free tier (always-on, no idle sleep, automatic HTTPS on a `*.northflank.app` domain), deployed automatically by [.github/workflows/deploy.yml](.github/workflows/deploy.yml) on every push to `main`. The database (Neon Postgres) is unaffected — only the API container moves.
+The API runs on [Northflank](https://northflank.com/)'s free tier (always-on, no idle sleep, automatic HTTPS on a `*.northflank.app` domain). Northflank is linked directly to this GitHub repo and builds/deploys the existing [Dockerfile](Dockerfile) itself on every push to `main` — [.github/workflows/ci.yml](.github/workflows/ci.yml) only runs a compile check on PRs and pushes, it doesn't perform the deploy. The database (Neon Postgres) is unaffected — only the API container moves.
 
 ### One-time Northflank setup
 
 1. Sign up at [northflank.com](https://northflank.com/) (no card required) and create a **Project** (e.g. `nastolka`).
-2. In that project, create a **Service** → Deployment → source **External Image**, image `ghcr.io/a1exymoroz/nastolka-api:latest` (the first push from CI will replace this). Leave the linked build service blank — GitHub Actions builds the image, Northflank just runs it.
-3. Under the service's **Networking**, add a public port mapping `8080 → HTTP/HTTPS` so Northflank issues a public URL with automatic TLS.
-4. Under the service's **Environment**, add the app's runtime variables (never committed to git):
+2. In that project, create a **Service**, source **Deployment** (build a Docker image from this repo, not "Combined"/git-store-image), link the GitHub account and select the `Nastolka-api` repo, branch `main`. Build type **Dockerfile**, context `/`, Dockerfile path `/Dockerfile` (matches this repo's layout).
+3. **Resources**: pick the largest compute plan available without an upgrade prompt — Spring Boot needs more than the default 256MB tier to avoid OOM at startup.
+4. **Networking**: add a public port mapping `8080 → HTTP` so Northflank issues a public URL with automatic TLS.
+5. **Environment variables** (Runtime variables — never committed to git):
    ```
    SPRING_PROFILES_ACTIVE=prod
    POSTGRES_HOST=...
@@ -171,7 +172,5 @@ The API runs on [Northflank](https://northflank.com/)'s free tier (always-on, no
    BGG_TOKEN=...
    BGG_API_BASE_URL=https://boardgamegeek.com/xmlapi2
    ```
-5. Note the **Project ID** and **Service ID** (visible in the Northflank dashboard URL or service settings) and update `PROJECT_ID`/`SERVICE_ID` in [.github/workflows/deploy.yml](.github/workflows/deploy.yml) if they differ from `nastolka` / `nastolka-api`.
-6. Generate a Northflank API token with "Update Deployment" permission, then add it as the `NORTHFLANK_API_KEY` secret in this repo's GitHub settings. Also make the `nastolka-api` GHCR package public so Northflank can pull it without extra registry credentials.
 
-After that, every merge to `main` builds a new image, pushes it to GHCR, and tells Northflank to redeploy the service with that image.
+After that, every merge to `main` triggers Northflank to rebuild the Dockerfile and redeploy automatically.
