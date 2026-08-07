@@ -74,10 +74,13 @@ public class LocationServiceImpl implements LocationService {
             );
         }
 
+        requireTelegramChatIdAvailable(request.getTelegramChatId());
+
         Location location = new Location();
         location.setOwner(owner);
         location.setName(request.getName());
         location.setDescription(request.getDescription());
+        location.setTelegramChatId(request.getTelegramChatId());
 
         return toResponse(locationRepository.save(location));
     }
@@ -88,8 +91,11 @@ public class LocationServiceImpl implements LocationService {
         Location location = requireLocation(id);
         accessGuard.requireManageAccess(location, requester);
 
+        requireTelegramChatIdAvailable(id, request.getTelegramChatId());
+
         location.setName(request.getName());
         location.setDescription(request.getDescription());
+        location.setTelegramChatId(request.getTelegramChatId());
 
         return toResponse(locationRepository.save(location));
     }
@@ -100,6 +106,20 @@ public class LocationServiceImpl implements LocationService {
         Location location = requireLocation(id);
         accessGuard.requireManageAccess(location, requester);
         locationRepository.delete(location);
+    }
+
+    private void requireTelegramChatIdAvailable(String telegramChatId) {
+        if (telegramChatId != null && !telegramChatId.isBlank()
+                && locationRepository.existsByTelegramChatId(telegramChatId)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "This Telegram chat is already linked to another location");
+        }
+    }
+
+    private void requireTelegramChatIdAvailable(Long locationId, String telegramChatId) {
+        if (telegramChatId != null && !telegramChatId.isBlank()
+                && locationRepository.existsByTelegramChatIdAndIdNot(telegramChatId, locationId)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "This Telegram chat is already linked to another location");
+        }
     }
 
     private Location requireLocation(Long id) {
@@ -113,6 +133,7 @@ public class LocationServiceImpl implements LocationService {
                 .name(location.getName())
                 .description(location.getDescription())
                 .ownerUsername(location.getOwner().getUsername())
+                .telegramChatId(location.getTelegramChatId())
                 .build();
     }
 }

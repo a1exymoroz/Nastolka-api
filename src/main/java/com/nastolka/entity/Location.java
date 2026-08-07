@@ -27,6 +27,9 @@ public class Location {
     @Column(length = 2000)
     private String description;
 
+    @Column(name = "telegram_chat_id", length = 64, unique = true)
+    private String telegramChatId;
+
     public Location() {
     }
 
@@ -60,5 +63,13 @@ public class Location {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getTelegramChatId() {
+        return telegramChatId;
+    }
+
+    public void setTelegramChatId(String telegramChatId) {
+        this.telegramChatId = telegramChatId;
     }
 }

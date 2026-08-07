@@ -14,6 +14,7 @@ import com.nastolka.entity.Location;
 import com.nastolka.entity.LocationGame;
 import com.nastolka.entity.LocationHistory;
 import com.nastolka.entity.User;
+import com.nastolka.integration.telegram.TelegramNotifier;
 import com.nastolka.repository.GameExpansionRepository;
 import com.nastolka.repository.GameRepository;
 import com.nastolka.repository.HistoryExpansionRepository;
@@ -56,6 +57,7 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
     private final HistoryExpansionRepository historyExpansionRepository;
     private final LocationShareRepository locationShareRepository;
     private final LocationAccessGuard accessGuard;
+    private final TelegramNotifier telegramNotifier;
 
     public LocationHistoryServiceImpl(
             LocationRepository locationRepository,
@@ -68,7 +70,8 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
             LocationGameExpansionRepository locationGameExpansionRepository,
             HistoryExpansionRepository historyExpansionRepository,
             LocationShareRepository locationShareRepository,
-            LocationAccessGuard accessGuard
+            LocationAccessGuard accessGuard,
+            TelegramNotifier telegramNotifier
     ) {
         this.locationRepository = locationRepository;
         this.gameRepository = gameRepository;
@@ -81,6 +84,7 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
         this.historyExpansionRepository = historyExpansionRepository;
         this.locationShareRepository = locationShareRepository;
         this.accessGuard = accessGuard;
+        this.telegramNotifier = telegramNotifier;
     }
 
     @Override
@@ -118,6 +122,17 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
     }
 
     @Override
+    public List<HistoryResponse> getRecentHistoryByChatId(String telegramChatId, int limit) {
+        Location location = locationRepository.findByTelegramChatId(telegramChatId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No location linked to this chat"));
+
+        return locationHistoryRepository.findByLocationIdOrderByPlayedAtDesc(location.getId()).stream()
+                .limit(limit)
+                .map(this::toResponse)
+                .toList();
+    }
+
+    @Override
     @Transactional
     public HistoryResponse addHistory(Long locationId, CreateHistoryRequest request, String username) {
         User requester = accessGuard.requireUser(username);
@@ -140,7 +155,11 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
         savePlayers(history, request.getPlayers(), request.getState() == HistoryState.FINISHED);
         saveExpansions(history, request.getExpansionIds());
 
-        return toResponse(history);
+        HistoryResponse response = toResponse(history);
+        if (response.getState() == HistoryState.FINISHED) {
+            telegramNotifier.notifyHistoryFinished(location, response);
+        }
+        return response;
     }
 
     @Override
@@ -151,6 +170,7 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
         accessGuard.requireManageAccess(location, requester);
 
         LocationHistory history = requireHistory(locationId, historyId);
+        HistoryState previousState = history.getState();
 
         Game game = resolveLocationGame(locationId, request.getGameId());
         history.setGame(game);
@@ -170,7 +190,11 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
         historyExpansionRepository.flush();
         saveExpansions(history, request.getExpansionIds());
 
-        return toResponse(history);
+        HistoryResponse response = toResponse(history);
+        if (previousState != HistoryState.FINISHED && response.getState() == HistoryState.FINISHED) {
+            telegramNotifier.notifyHistoryFinished(location, response);
+        }
+        return response;
     }
 
     @Override

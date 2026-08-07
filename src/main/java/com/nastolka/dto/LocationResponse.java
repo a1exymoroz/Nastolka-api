@@ -6,6 +6,7 @@ public class LocationResponse {
     private String name;
     private String description;
     private String ownerUsername;
+    private String telegramChatId;
 
     public LocationResponse() {
     }
@@ -46,11 +47,20 @@ public class LocationResponse {
         this.ownerUsername = ownerUsername;
     }
 
+    public String getTelegramChatId() {
+        return telegramChatId;
+    }
+
+    public void setTelegramChatId(String telegramChatId) {
+        this.telegramChatId = telegramChatId;
+    }
+
     public static class Builder {
         private Long id;
         private String name;
         private String description;
         private String ownerUsername;
+        private String telegramChatId;
 
         public Builder id(Long id) {
             this.id = id;
@@ -72,12 +82,18 @@ public class LocationResponse {
             return this;
         }
 
+        public Builder telegramChatId(String telegramChatId) {
+            this.telegramChatId = telegramChatId;
+            return this;
+        }
+
         public LocationResponse build() {
             LocationResponse response = new LocationResponse();
             response.id = id;
             response.name = name;
             response.description = description;
             response.ownerUsername = ownerUsername;
+            response.telegramChatId = telegramChatId;
             return response;
         }
     }

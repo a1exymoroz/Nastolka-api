@@ -9,6 +9,8 @@ public interface LocationHistoryService {
 
     List<HistoryResponse> getHistory(Long locationId, String username);
 
+    List<HistoryResponse> getRecentHistoryByChatId(String telegramChatId, int limit);
+
     HistoryResponse addHistory(Long locationId, CreateHistoryRequest request, String username);
 
     HistoryResponse updateHistory(Long locationId, Long historyId, CreateHistoryRequest request, String username);

@@ -12,6 +12,9 @@ public class CreateLocationRequest {
     @Size(max = 2000)
     private String description;
 
+    @Size(max = 64)
+    private String telegramChatId;
+
     public String getName() {
         return name;
     }
@@ -26,5 +29,13 @@ public class CreateLocationRequest {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getTelegramChatId() {
+        return telegramChatId;
+    }
+
+    public void setTelegramChatId(String telegramChatId) {
+        this.telegramChatId = telegramChatId;
     }
 }
