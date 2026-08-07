@@ -124,11 +124,16 @@ Each location can be linked to a Telegram chat that gets notified whenever a new
 
 1. Create a bot via [@BotFather](https://t.me/BotFather) and copy the token it gives you.
 2. Add to `.env.local`: `TELEGRAM_BOT_TOKEN=your-token`
-3. Add the bot to the Telegram group (or start a DM with it) you want notified, then send it any message.
-4. Visit `https://api.telegram.org/bot<token>/getUpdates` in a browser and read the `chat.id` value from the response (negative for groups).
-5. Set that value as `telegramChatId` on the location via `PUT /api/locations/{id}`.
+3. Run the bot (see [Nastolka-telegram](https://github.com/a1exymoroz/Nastolka-telegram)), add it to the Telegram group (or start a DM with it) you want notified, then send it `/id`. It replies with that chat's id (negative for groups).
+4. Set that value as `telegramChatId` on the location via `PUT /api/locations/{id}`.
+
+There's no web client yet, so step 4 is done via Postman/curl for now.
 
 If `TELEGRAM_BOT_TOKEN` is unset, or a location has no `telegramChatId`, history creation still works — notifications are just skipped silently.
+
+### `/history` command
+
+The bot's `/history` command fetches a location's recent games by calling `GET /api/telegram/history?chatId=...` on this backend. This endpoint bypasses normal user JWT auth (there's no Telegram-user-to-app-account login yet) and instead requires a shared secret in the `X-Telegram-Bot-Secret` header, checked against `TELEGRAM_BOT_SECRET`. Set the same value in this backend's `.env.local`/`.env.prod` and in the bot's `.env` (see [Nastolka-telegram](https://github.com/a1exymoroz/Nastolka-telegram)).
 
 ## Postman
 
@@ -184,6 +189,7 @@ The API runs on [Northflank](https://northflank.com/)'s free tier (always-on, no
    BGG_TOKEN=...
    BGG_API_BASE_URL=https://boardgamegeek.com/xmlapi2
    TELEGRAM_BOT_TOKEN=...
+   TELEGRAM_BOT_SECRET=...
    ```
 
 After that, every merge to `main` triggers Northflank to rebuild the Dockerfile and redeploy automatically.

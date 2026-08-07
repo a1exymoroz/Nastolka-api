@@ -45,6 +45,7 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/health/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
+                        .requestMatchers("/api/telegram/**").permitAll()
                         .requestMatchers(HttpMethod.DELETE, "/api/games/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/games/import/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/games/*/expansions/import/**").hasRole("ADMIN")

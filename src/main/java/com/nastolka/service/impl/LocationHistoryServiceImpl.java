@@ -122,6 +122,17 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
     }
 
     @Override
+    public List<HistoryResponse> getRecentHistoryByChatId(String telegramChatId, int limit) {
+        Location location = locationRepository.findByTelegramChatId(telegramChatId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No location linked to this chat"));
+
+        return locationHistoryRepository.findByLocationIdOrderByPlayedAtDesc(location.getId()).stream()
+                .limit(limit)
+                .map(this::toResponse)
+                .toList();
+    }
+
+    @Override
     @Transactional
     public HistoryResponse addHistory(Long locationId, CreateHistoryRequest request, String username) {
         User requester = accessGuard.requireUser(username);
