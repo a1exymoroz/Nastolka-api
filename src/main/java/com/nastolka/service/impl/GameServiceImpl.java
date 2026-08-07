@@ -1,5 +1,6 @@
 package com.nastolka.service.impl;
 
+import com.nastolka.config.CacheConfig;
 import com.nastolka.dto.BggSearchResult;
 import com.nastolka.dto.CreateGameRequest;
 import com.nastolka.dto.GameResponse;
@@ -9,6 +10,8 @@ import com.nastolka.integration.bgg.BggGameDetails;
 import com.nastolka.integration.bgg.BggSearchItem;
 import com.nastolka.repository.GameRepository;
 import com.nastolka.service.GameService;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -30,6 +33,7 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
+    @Cacheable(cacheNames = CacheConfig.GAMES_LIST_CACHE)
     public List<GameResponse> getAllGames() {
         return gameRepository.findAll().stream()
                 .map(this::toResponse)
@@ -44,6 +48,7 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
+    @CacheEvict(cacheNames = CacheConfig.GAMES_LIST_CACHE, allEntries = true)
     public GameResponse createGame(CreateGameRequest request) {
         Game game = new Game();
         game.setName(request.getName());
@@ -66,6 +71,7 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
+    @CacheEvict(cacheNames = CacheConfig.GAMES_LIST_CACHE, allEntries = true)
     public GameResponse importFromBgg(Long bggId) {
         if (gameRepository.existsByBggId(bggId)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Game already imported from BoardGameGeek");
@@ -92,6 +98,7 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
+    @CacheEvict(cacheNames = CacheConfig.GAMES_LIST_CACHE, allEntries = true)
     public GameResponse getOrImportByBggId(Long bggId) {
         return gameRepository.findByBggId(bggId)
                 .map(this::toResponse)
@@ -99,6 +106,7 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
+    @CacheEvict(cacheNames = CacheConfig.GAMES_LIST_CACHE, allEntries = true)
     public void deleteGame(Long id) {
         if (!gameRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Game not found");
