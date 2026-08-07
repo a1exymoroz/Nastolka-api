@@ -143,3 +143,40 @@ To remove persisted data:
 ```bash
 docker-compose down -v
 ```
+
+## Deployment
+
+The API runs on an Oracle Cloud "Always Free" Ampere A1 VM (Docker + [Caddy](https://caddyserver.com/) reverse proxy for automatic HTTPS), deployed automatically by [.github/workflows/deploy.yml](.github/workflows/deploy.yml) on every push to `main`. The database (Neon Postgres) is unaffected — only the API container moves.
+
+### One-time VM setup
+
+1. Provision an Always Free `VM.Standard.A1.Flex` instance (Ubuntu 22.04/24.04) in Oracle Cloud, reserve a static public IP, and open ingress on TCP 80/443 in the instance's Security List/NSG.
+2. Point a free [DuckDNS](https://www.duckdns.org/) hostname at the VM's static IP, and update it in [deploy/Caddyfile](deploy/Caddyfile) if it differs from `nastolka-api.duckdns.org`.
+3. Copy the `deploy/` folder to the VM and run the bootstrap script once:
+   ```bash
+   scp -r deploy ubuntu@<VM_HOST>:~/nastolka-deploy
+   ssh ubuntu@<VM_HOST>
+   sudo bash ~/nastolka-deploy/bootstrap-vm.sh
+   ```
+4. Create `/opt/nastolka-api/.env` on the VM with the app's runtime config (never committed to git):
+   ```
+   SPRING_PROFILES_ACTIVE=prod
+   POSTGRES_HOST=...
+   POSTGRES_PORT=5432
+   POSTGRES_DB=...
+   POSTGRES_USER=...
+   POSTGRES_PASSWORD=...
+   APP_JWT_SECRET=...
+   APP_JWT_EXPIRATION_MS=86400000
+   GOOGLE_CLIENT_ID=...
+   CORS_ALLOWED_ORIGINS=https://nastolka.netlify.app
+   ADMIN_USERNAME=admin
+   ADMIN_EMAIL=...
+   ADMIN_PASSWORD=...
+   BGG_TOKEN=...
+   BGG_API_BASE_URL=https://boardgamegeek.com/xmlapi2
+   ```
+5. `cd /opt/nastolka-api && docker compose up -d` to bring up the app + Caddy.
+6. In this repo's GitHub settings, add secrets `VM_HOST`, `VM_SSH_USER` (`ubuntu`), and `VM_SSH_KEY` (the private key matching the VM's authorized key), and make the `nastolka-api` GHCR package public so the VM can pull it without extra auth.
+
+After that, every merge to `main` builds a new image, pushes it to GHCR, and SSHes into the VM to pull and restart the `app` container — Caddy and its TLS certificate are untouched.
