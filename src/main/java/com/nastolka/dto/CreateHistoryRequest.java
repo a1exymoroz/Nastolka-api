@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 public class CreateHistoryRequest {
@@ -15,14 +15,14 @@ public class CreateHistoryRequest {
     @NotNull
     private Long gameId;
 
-    private LocalDateTime playedAt;
+    private Instant playedAt;
 
     @NotNull
     private HistoryState state;
 
-    private LocalDateTime startedAt;
+    private Instant startedAt;
 
-    private LocalDateTime finishedAt;
+    private Instant finishedAt;
 
     @Min(1)
     @Max(10)
@@ -41,11 +41,11 @@ public class CreateHistoryRequest {
         this.gameId = gameId;
     }
 
-    public LocalDateTime getPlayedAt() {
+    public Instant getPlayedAt() {
         return playedAt;
     }
 
-    public void setPlayedAt(LocalDateTime playedAt) {
+    public void setPlayedAt(Instant playedAt) {
         this.playedAt = playedAt;
     }
 
@@ -57,19 +57,19 @@ public class CreateHistoryRequest {
         this.state = state;
     }
 
-    public LocalDateTime getStartedAt() {
+    public Instant getStartedAt() {
         return startedAt;
     }
 
-    public void setStartedAt(LocalDateTime startedAt) {
+    public void setStartedAt(Instant startedAt) {
         this.startedAt = startedAt;
     }
 
-    public LocalDateTime getFinishedAt() {
+    public Instant getFinishedAt() {
         return finishedAt;
     }
 
-    public void setFinishedAt(LocalDateTime finishedAt) {
+    public void setFinishedAt(Instant finishedAt) {
         this.finishedAt = finishedAt;
     }
 

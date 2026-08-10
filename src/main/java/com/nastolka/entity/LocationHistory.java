@@ -14,7 +14,7 @@ import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "location_history")
@@ -35,16 +35,16 @@ public class LocationHistory {
     private Game game;
 
     @Column(nullable = false)
-    private LocalDateTime playedAt;
+    private Instant playedAt;
 
     @Enumerated(EnumType.STRING)
     @ColumnDefault("'CREATED'")
     @Column(nullable = false)
     private HistoryState state = HistoryState.CREATED;
 
-    private LocalDateTime startedAt;
+    private Instant startedAt;
 
-    private LocalDateTime finishedAt;
+    private Instant finishedAt;
 
     private Integer rating;
 
@@ -75,11 +75,11 @@ public class LocationHistory {
         this.game = game;
     }
 
-    public LocalDateTime getPlayedAt() {
+    public Instant getPlayedAt() {
         return playedAt;
     }
 
-    public void setPlayedAt(LocalDateTime playedAt) {
+    public void setPlayedAt(Instant playedAt) {
         this.playedAt = playedAt;
     }
 
@@ -91,19 +91,19 @@ public class LocationHistory {
         this.state = state;
     }
 
-    public LocalDateTime getStartedAt() {
+    public Instant getStartedAt() {
         return startedAt;
     }
 
-    public void setStartedAt(LocalDateTime startedAt) {
+    public void setStartedAt(Instant startedAt) {
         this.startedAt = startedAt;
     }
 
-    public LocalDateTime getFinishedAt() {
+    public Instant getFinishedAt() {
         return finishedAt;
     }
 
-    public void setFinishedAt(LocalDateTime finishedAt) {
+    public void setFinishedAt(Instant finishedAt) {
         this.finishedAt = finishedAt;
     }
 
