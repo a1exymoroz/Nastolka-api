@@ -11,6 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.9.2] - 2026-08-10
+
+### Fixed
+
+- Telegram "session finished" notification showed a redundant midnight
+  time (e.g. "Aug 9, 2026, 12:00 AM") because `playedAt` has no meaningful
+  time-of-day; the notification date is now date-only. Also fixes the
+  formatter crashing on the now-`Instant` `playedAt` field, which had no
+  zone attached.
+
 ## [0.9.1] - 2026-08-10
 
 ### Fixed

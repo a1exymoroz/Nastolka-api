@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
@@ -20,7 +21,7 @@ import java.util.Map;
 public class TelegramNotifier {
 
     private static final DateTimeFormatter DATE_FORMATTER =
-            DateTimeFormatter.ofPattern("MMM d, yyyy, h:mm a", Locale.ENGLISH);
+            DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.ENGLISH).withZone(ZoneOffset.UTC);
 
     private static final Logger log = LoggerFactory.getLogger(TelegramNotifier.class);
 
