@@ -2,7 +2,7 @@ package com.nastolka.dto;
 
 import com.nastolka.entity.HistoryState;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 public class HistoryResponse {
@@ -11,10 +11,10 @@ public class HistoryResponse {
     private Long locationId;
     private Long gameId;
     private String gameName;
-    private LocalDateTime playedAt;
+    private Instant playedAt;
     private HistoryState state;
-    private LocalDateTime startedAt;
-    private LocalDateTime finishedAt;
+    private Instant startedAt;
+    private Instant finishedAt;
     private Long durationMinutes;
     private Integer rating;
     private List<PlayerResultResponse> players;
@@ -59,11 +59,11 @@ public class HistoryResponse {
         this.gameName = gameName;
     }
 
-    public LocalDateTime getPlayedAt() {
+    public Instant getPlayedAt() {
         return playedAt;
     }
 
-    public void setPlayedAt(LocalDateTime playedAt) {
+    public void setPlayedAt(Instant playedAt) {
         this.playedAt = playedAt;
     }
 
@@ -75,19 +75,19 @@ public class HistoryResponse {
         this.state = state;
     }
 
-    public LocalDateTime getStartedAt() {
+    public Instant getStartedAt() {
         return startedAt;
     }
 
-    public void setStartedAt(LocalDateTime startedAt) {
+    public void setStartedAt(Instant startedAt) {
         this.startedAt = startedAt;
     }
 
-    public LocalDateTime getFinishedAt() {
+    public Instant getFinishedAt() {
         return finishedAt;
     }
 
-    public void setFinishedAt(LocalDateTime finishedAt) {
+    public void setFinishedAt(Instant finishedAt) {
         this.finishedAt = finishedAt;
     }
 
@@ -128,10 +128,10 @@ public class HistoryResponse {
         private Long locationId;
         private Long gameId;
         private String gameName;
-        private LocalDateTime playedAt;
+        private Instant playedAt;
         private HistoryState state;
-        private LocalDateTime startedAt;
-        private LocalDateTime finishedAt;
+        private Instant startedAt;
+        private Instant finishedAt;
         private Long durationMinutes;
         private Integer rating;
         private List<PlayerResultResponse> players;
@@ -157,7 +157,7 @@ public class HistoryResponse {
             return this;
         }
 
-        public Builder playedAt(LocalDateTime playedAt) {
+        public Builder playedAt(Instant playedAt) {
             this.playedAt = playedAt;
             return this;
         }
@@ -167,12 +167,12 @@ public class HistoryResponse {
             return this;
         }
 
-        public Builder startedAt(LocalDateTime startedAt) {
+        public Builder startedAt(Instant startedAt) {
             this.startedAt = startedAt;
             return this;
         }
 
-        public Builder finishedAt(LocalDateTime finishedAt) {
+        public Builder finishedAt(Instant finishedAt) {
             this.finishedAt = finishedAt;
             return this;
         }

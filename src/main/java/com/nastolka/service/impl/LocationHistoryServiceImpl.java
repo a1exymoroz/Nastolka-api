@@ -32,7 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -144,7 +144,7 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
         LocationHistory history = new LocationHistory();
         history.setLocation(location);
         history.setGame(game);
-        history.setPlayedAt(request.getPlayedAt() != null ? request.getPlayedAt() : LocalDateTime.now());
+        history.setPlayedAt(request.getPlayedAt() != null ? request.getPlayedAt() : Instant.now());
         history.setState(request.getState());
         history.setStartedAt(resolveStartedAt(null, request));
         history.setFinishedAt(resolveFinishedAt(null, request));
@@ -174,7 +174,7 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
 
         Game game = resolveLocationGame(locationId, request.getGameId());
         history.setGame(game);
-        history.setPlayedAt(request.getPlayedAt() != null ? request.getPlayedAt() : LocalDateTime.now());
+        history.setPlayedAt(request.getPlayedAt() != null ? request.getPlayedAt() : Instant.now());
         history.setStartedAt(resolveStartedAt(history.getStartedAt(), request));
         history.setFinishedAt(resolveFinishedAt(history.getFinishedAt(), request));
         history.setState(request.getState());
@@ -295,7 +295,7 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
         historyExpansionRepository.saveAll(historyExpansions);
     }
 
-    private LocalDateTime resolveStartedAt(LocalDateTime existing, CreateHistoryRequest request) {
+    private Instant resolveStartedAt(Instant existing, CreateHistoryRequest request) {
         if (request.getStartedAt() != null) {
             return request.getStartedAt();
         }
@@ -303,12 +303,12 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
             return existing;
         }
         if (request.getState() == HistoryState.IN_PROGRESS || request.getState() == HistoryState.FINISHED) {
-            return LocalDateTime.now();
+            return Instant.now();
         }
         return null;
     }
 
-    private LocalDateTime resolveFinishedAt(LocalDateTime existing, CreateHistoryRequest request) {
+    private Instant resolveFinishedAt(Instant existing, CreateHistoryRequest request) {
         if (request.getFinishedAt() != null) {
             return request.getFinishedAt();
         }
@@ -316,7 +316,7 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
             return existing;
         }
         if (request.getState() == HistoryState.FINISHED) {
-            return LocalDateTime.now();
+            return Instant.now();
         }
         return null;
     }
