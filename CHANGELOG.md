@@ -11,6 +11,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.9.3] - 2026-08-11
+
+### Fixed
+
+- API error responses (400/404/409/etc.) returned Spring Boot's default
+  whitelabel-style body with no `message` field, so callers couldn't tell
+  *why* a request failed (e.g. importing a BoardGameGeek expansion id via
+  the game-import endpoint just returned a bare `400` with no explanation).
+  Added a `GlobalExceptionHandler` (`@RestControllerAdvice`) that surfaces
+  the actual reason for `ResponseStatusException`, `IllegalArgumentException`,
+  and `@Valid` validation failures, and also turns an unhandled BGG
+  "game not found" case into a proper `400` instead of a `500`.
+
 ## [0.9.2] - 2026-08-10
 
 ### Fixed
