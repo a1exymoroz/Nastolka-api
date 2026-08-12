@@ -11,6 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-08-12
+
+### Added
+
+- Redesigned the Telegram "game finished" notification with bold headers,
+  medal emojis (🥇🥈🥉) for the top three players, and a `🔗 View details`
+  link to the game's history page in the web app. The link's base URL comes
+  from a new `WEB_URL` env var.
+
 ## [0.9.3] - 2026-08-11
 
 ### Fixed
