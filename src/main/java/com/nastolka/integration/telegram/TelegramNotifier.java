@@ -31,20 +31,17 @@ public class TelegramNotifier {
     private final String token;
     private final boolean isProd;
     private final String webUrl;
-    private final String corsOrigins;
 
     public TelegramNotifier(
             RestClient telegramRestClient,
             @Value("${app.telegram.bot-token:}") String token,
             @Value("${spring.profiles.active:}") String activeProfile,
-            @Value("${app.web.url:}") String webUrl,
-            @Value("${app.cors.allowed-origins:}") String corsOrigins
+            @Value("${app.web.url:}") String webUrl
     ) {
         this.restClient = telegramRestClient;
         this.token = token;
         this.isProd = "prod".equalsIgnoreCase(activeProfile);
         this.webUrl = webUrl;
-        this.corsOrigins = corsOrigins;
     }
 
     public void notifyHistoryFinished(Location location, HistoryResponse history) {
@@ -123,22 +120,11 @@ public class TelegramNotifier {
     }
 
     private String resolveBaseUrl() {
-        if (webUrl != null && !webUrl.isBlank()) {
-            return stripTrailingSlash(webUrl.trim());
+        if (webUrl == null || webUrl.isBlank()) {
+            return null;
         }
-        if (corsOrigins != null && !corsOrigins.isBlank()) {
-            for (String origin : corsOrigins.split(",")) {
-                String trimmed = origin.trim();
-                if (!trimmed.isEmpty()) {
-                    return stripTrailingSlash(trimmed);
-                }
-            }
-        }
-        return null;
-    }
-
-    private String stripTrailingSlash(String url) {
-        return url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
+        String trimmed = webUrl.trim();
+        return trimmed.endsWith("/") ? trimmed.substring(0, trimmed.length() - 1) : trimmed;
     }
 
     private String formatDuration(long minutes) {
