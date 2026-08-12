@@ -10,9 +10,11 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.util.HtmlUtils;
 
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -28,15 +30,21 @@ public class TelegramNotifier {
     private final RestClient restClient;
     private final String token;
     private final boolean isProd;
+    private final String webUrl;
+    private final String corsOrigins;
 
     public TelegramNotifier(
             RestClient telegramRestClient,
             @Value("${app.telegram.bot-token:}") String token,
-            @Value("${spring.profiles.active:}") String activeProfile
+            @Value("${spring.profiles.active:}") String activeProfile,
+            @Value("${app.web.url:}") String webUrl,
+            @Value("${app.cors.allowed-origins:}") String corsOrigins
     ) {
         this.restClient = telegramRestClient;
         this.token = token;
         this.isProd = "prod".equalsIgnoreCase(activeProfile);
+        this.webUrl = webUrl;
+        this.corsOrigins = corsOrigins;
     }
 
     public void notifyHistoryFinished(Location location, HistoryResponse history) {
@@ -47,12 +55,12 @@ public class TelegramNotifier {
             return;
         }
 
-        String text = buildMessage(history);
+        String text = buildMessage(location, history);
         try {
             restClient.post()
                     .uri("/sendMessage")
                     .contentType(MediaType.APPLICATION_JSON)
-                    .body(Map.of("chat_id", chatId, "text", text))
+                    .body(Map.of("chat_id", chatId, "text", text, "parse_mode", "HTML"))
                     .retrieve()
                     .toBodilessEntity();
             log.info("Sent Telegram notification for history {} at location {}", history.getId(), location.getId());
@@ -61,18 +69,23 @@ public class TelegramNotifier {
         }
     }
 
-    private String buildMessage(HistoryResponse history) {
+    private String buildMessage(Location location, HistoryResponse history) {
         StringBuilder text = new StringBuilder();
         if (!isProd) {
-            text.append("🧪 [DEV] ");
+            text.append("🧪 <b>[DEV]</b>\n");
         }
-        text.append("🎲 ").append(history.getGameName()).append('\n');
+        text.append("🎲 <b>").append(HtmlUtils.htmlEscape(history.getGameName())).append("</b>\n");
         text.append("✅ Finished\n");
+
+        List<String> details = new ArrayList<>();
         if (history.getPlayedAt() != null) {
-            text.append(DATE_FORMATTER.format(history.getPlayedAt())).append('\n');
+            details.add("📅 " + DATE_FORMATTER.format(history.getPlayedAt()));
         }
         if (history.getDurationMinutes() != null) {
-            text.append("Duration: ").append(formatDuration(history.getDurationMinutes())).append('\n');
+            details.add("⏱ " + formatDuration(history.getDurationMinutes()));
+        }
+        if (!details.isEmpty()) {
+            text.append(String.join("   ", details)).append('\n');
         }
 
         List<PlayerResultResponse> players = history.getPlayers();
@@ -80,15 +93,52 @@ public class TelegramNotifier {
             text.append('\n');
             for (int i = 0; i < players.size(); i++) {
                 PlayerResultResponse player = players.get(i);
-                text.append(i + 1).append(". ").append(player.getUsername());
+                text.append(rankMarker(i)).append(' ').append(HtmlUtils.htmlEscape(player.getUsername()));
                 if (player.getPoints() != null) {
-                    text.append(" (").append(player.getPoints()).append(" pts)");
+                    text.append(" — <b>").append(player.getPoints()).append(" pts</b>");
                 }
                 text.append('\n');
             }
         }
 
+        String baseUrl = resolveBaseUrl();
+        if (baseUrl != null) {
+            text.append('\n');
+            text.append("🔗 <a href=\"").append(baseUrl)
+                    .append("/locations/").append(location.getId())
+                    .append("/history/").append(history.getId())
+                    .append("\">View details</a>");
+        }
+
         return text.toString().stripTrailing();
+    }
+
+    private String rankMarker(int index) {
+        return switch (index) {
+            case 0 -> "🥇";
+            case 1 -> "🥈";
+            case 2 -> "🥉";
+            default -> (index + 1) + ".";
+        };
+    }
+
+    private String resolveBaseUrl() {
+        if (webUrl != null && !webUrl.isBlank()) {
+            return stripTrailingSlash(webUrl.trim());
+        }
+        if (corsOrigins != null && !corsOrigins.isBlank()) {
+            for (String origin : corsOrigins.split(",")) {
+                String trimmed = origin.trim();
+                if (!trimmed.isEmpty()) {
+                    return stripTrailingSlash(trimmed);
+                }
+            }
+        }
+        return null;
+    }
+
+    private String stripTrailingSlash(String url) {
+        return url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
     }
 
     private String formatDuration(long minutes) {
