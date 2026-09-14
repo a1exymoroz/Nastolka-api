@@ -1,0 +1,243 @@
+package com.nastolka.service.impl;
+
+import com.nastolka.dto.ActivityBucketResponse;
+import com.nastolka.dto.ActivityGranularity;
+import com.nastolka.dto.ActivityStatistics;
+import com.nastolka.dto.DailyActivityResponse;
+import com.nastolka.dto.ExpansionUsageResponse;
+import com.nastolka.dto.GamePlayCountResponse;
+import com.nastolka.dto.GameRatingResponse;
+import com.nastolka.dto.GameStatistics;
+import com.nastolka.dto.LibraryCoverageResponse;
+import com.nastolka.dto.LocationStatisticsResponse;
+import com.nastolka.dto.PlayerStatisticResponse;
+import com.nastolka.dto.StatisticsOverview;
+import com.nastolka.entity.HistoryState;
+import com.nastolka.entity.Location;
+import com.nastolka.entity.User;
+import com.nastolka.repository.HistoryExpansionRepository;
+import com.nastolka.repository.HistoryPlayerRepository;
+import com.nastolka.repository.LocationGameRepository;
+import com.nastolka.repository.LocationHistoryRepository;
+import com.nastolka.repository.LocationRepository;
+import com.nastolka.repository.projection.SessionTimingProjection;
+import com.nastolka.service.LocationStatisticsService;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.time.DayOfWeek;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.time.temporal.TemporalAdjusters;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
+
+@Service
+public class LocationStatisticsServiceImpl implements LocationStatisticsService {
+
+    private static final int TOP_N_DEFAULT = 5;
+    private static final long MIN_RATING_SAMPLE_SIZE = 2;
+    private static final int CONTRIBUTION_CALENDAR_DAYS = 365;
+
+    private final LocationRepository locationRepository;
+    private final LocationHistoryRepository locationHistoryRepository;
+    private final HistoryPlayerRepository historyPlayerRepository;
+    private final HistoryExpansionRepository historyExpansionRepository;
+    private final LocationGameRepository locationGameRepository;
+    private final LocationAccessGuard accessGuard;
+
+    public LocationStatisticsServiceImpl(
+            LocationRepository locationRepository,
+            LocationHistoryRepository locationHistoryRepository,
+            HistoryPlayerRepository historyPlayerRepository,
+            HistoryExpansionRepository historyExpansionRepository,
+            LocationGameRepository locationGameRepository,
+            LocationAccessGuard accessGuard
+    ) {
+        this.locationRepository = locationRepository;
+        this.locationHistoryRepository = locationHistoryRepository;
+        this.historyPlayerRepository = historyPlayerRepository;
+        this.historyExpansionRepository = historyExpansionRepository;
+        this.locationGameRepository = locationGameRepository;
+        this.accessGuard = accessGuard;
+    }
+
+    @Override
+    public LocationStatisticsResponse getStatistics(Long locationId, String username, ActivityGranularity granularity) {
+        User requester = accessGuard.requireUser(username);
+        Location location = requireLocation(locationId);
+        accessGuard.requireViewAccess(location, requester);
+
+        HistoryState state = HistoryState.FINISHED;
+        List<SessionTimingProjection> timings = locationHistoryRepository.findSessionTimings(locationId, state);
+
+        return LocationStatisticsResponse.builder()
+                .locationId(locationId)
+                .overview(buildOverview(locationId, state, timings))
+                .gameStats(buildGameStats(locationId, state))
+                .playerLeaderboard(buildPlayerLeaderboard(locationId, state))
+                .mostActivePlayers(buildMostActivePlayers(locationId, state))
+                .activity(buildActivity(timings, granularity))
+                .mostUsedExpansions(buildMostUsedExpansions(locationId, state))
+                .contributionCalendar(buildContributionCalendar(timings))
+                .build();
+    }
+
+    private StatisticsOverview buildOverview(Long locationId, HistoryState state, List<SessionTimingProjection> timings) {
+        long totalFinishedSessions = locationHistoryRepository.countByLocationIdAndState(locationId, state);
+        Double averageRating = locationHistoryRepository.findAverageRating(locationId, state);
+
+        List<Long> sessionDurationMinutes = timings.stream()
+                .filter(timing -> timing.getStartedAt() != null && timing.getFinishedAt() != null)
+                .map(timing -> Duration.between(timing.getStartedAt(), timing.getFinishedAt()).toMinutes())
+                .toList();
+        long totalPlayTimeMinutes = sessionDurationMinutes.stream().mapToLong(Long::longValue).sum();
+        Double averageSessionLengthMinutes = sessionDurationMinutes.isEmpty()
+                ? null
+                : totalPlayTimeMinutes / (double) sessionDurationMinutes.size();
+
+        return StatisticsOverview.builder()
+                .totalFinishedSessions(totalFinishedSessions)
+                .totalPlayTimeMinutes(totalPlayTimeMinutes)
+                .averageSessionLengthMinutes(averageSessionLengthMinutes)
+                .averageRating(averageRating)
+                .build();
+    }
+
+    private GameStatistics buildGameStats(Long locationId, HistoryState state) {
+        List<GamePlayCountResponse> mostPlayedGames = locationHistoryRepository
+                .findMostPlayedGames(locationId, state, PageRequest.of(0, TOP_N_DEFAULT)).stream()
+                .map(projection -> GamePlayCountResponse.builder()
+                        .gameId(projection.getGameId())
+                        .gameName(projection.getGameName())
+                        .playCount(projection.getPlayCount())
+                        .build())
+                .toList();
+
+        List<GameRatingResponse> topRatedGames = locationHistoryRepository
+                .findTopRatedGames(locationId, state, MIN_RATING_SAMPLE_SIZE, PageRequest.of(0, TOP_N_DEFAULT)).stream()
+                .map(projection -> GameRatingResponse.builder()
+                        .gameId(projection.getGameId())
+                        .gameName(projection.getGameName())
+                        .averageRating(projection.getAverageRating())
+                        .ratingCount(projection.getRatingCount())
+                        .build())
+                .toList();
+
+        long gamesPlayed = locationHistoryRepository.countDistinctGamesPlayed(locationId, state);
+        long totalGamesInLibrary = locationGameRepository.countByLocationId(locationId);
+        Double coveragePercentage = totalGamesInLibrary == 0 ? null : gamesPlayed * 100.0 / totalGamesInLibrary;
+
+        LibraryCoverageResponse libraryCoverage = LibraryCoverageResponse.builder()
+                .gamesPlayed(gamesPlayed)
+                .totalGamesInLibrary(totalGamesInLibrary)
+                .coveragePercentage(coveragePercentage)
+                .build();
+
+        return GameStatistics.builder()
+                .mostPlayedGames(mostPlayedGames)
+                .topRatedGames(topRatedGames)
+                .libraryCoverage(libraryCoverage)
+                .build();
+    }
+
+    private List<PlayerStatisticResponse> buildPlayerLeaderboard(Long locationId, HistoryState state) {
+        return historyPlayerRepository.findPlayerStats(locationId, state).stream()
+                .map(projection -> {
+                    long gamesPlayed = projection.getGamesPlayed();
+                    long wins = projection.getWins();
+                    double winRatePercentage = gamesPlayed == 0 ? 0.0 : wins * 100.0 / gamesPlayed;
+                    return PlayerStatisticResponse.builder()
+                            .username(projection.getUsername())
+                            .gamesPlayed(gamesPlayed)
+                            .wins(wins)
+                            .winRatePercentage(winRatePercentage)
+                            .totalPoints(projection.getTotalPoints())
+                            .averagePoints(projection.getAveragePoints() != null ? projection.getAveragePoints() : 0.0)
+                            .build();
+                })
+                .sorted(Comparator.comparingLong(PlayerStatisticResponse::getWins).reversed()
+                        .thenComparing(Comparator.comparingLong(PlayerStatisticResponse::getTotalPoints).reversed())
+                        .thenComparing(PlayerStatisticResponse::getUsername))
+                .toList();
+    }
+
+    private List<PlayerStatisticResponse> buildMostActivePlayers(Long locationId, HistoryState state) {
+        return historyPlayerRepository.findPlayerStats(locationId, state).stream()
+                .map(projection -> {
+                    long gamesPlayed = projection.getGamesPlayed();
+                    long wins = projection.getWins();
+                    double winRatePercentage = gamesPlayed == 0 ? 0.0 : wins * 100.0 / gamesPlayed;
+                    return PlayerStatisticResponse.builder()
+                            .username(projection.getUsername())
+                            .gamesPlayed(gamesPlayed)
+                            .wins(wins)
+                            .winRatePercentage(winRatePercentage)
+                            .totalPoints(projection.getTotalPoints())
+                            .averagePoints(projection.getAveragePoints() != null ? projection.getAveragePoints() : 0.0)
+                            .build();
+                })
+                .sorted(Comparator.comparingLong(PlayerStatisticResponse::getGamesPlayed).reversed()
+                        .thenComparing(PlayerStatisticResponse::getUsername))
+                .limit(TOP_N_DEFAULT)
+                .toList();
+    }
+
+    private ActivityStatistics buildActivity(List<SessionTimingProjection> timings, ActivityGranularity granularity) {
+        Map<LocalDate, Long> buckets = timings.stream()
+                .map(timing -> timing.getPlayedAt().atZone(ZoneOffset.UTC).toLocalDate())
+                .map(date -> granularity == ActivityGranularity.WEEK
+                        ? date.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+                        : date.withDayOfMonth(1))
+                .collect(Collectors.groupingBy(date -> date, TreeMap::new, Collectors.counting()));
+
+        List<ActivityBucketResponse> bucketResponses = buckets.entrySet().stream()
+                .map(entry -> ActivityBucketResponse.builder()
+                        .bucketStart(entry.getKey())
+                        .sessionCount(entry.getValue())
+                        .build())
+                .toList();
+
+        return ActivityStatistics.builder()
+                .granularity(granularity)
+                .buckets(bucketResponses)
+                .build();
+    }
+
+    private List<DailyActivityResponse> buildContributionCalendar(List<SessionTimingProjection> timings) {
+        LocalDate cutoff = LocalDate.now(ZoneOffset.UTC).minusDays(CONTRIBUTION_CALENDAR_DAYS - 1L);
+
+        Map<LocalDate, Long> dailyCounts = timings.stream()
+                .map(timing -> timing.getPlayedAt().atZone(ZoneOffset.UTC).toLocalDate())
+                .filter(date -> !date.isBefore(cutoff))
+                .collect(Collectors.groupingBy(date -> date, TreeMap::new, Collectors.counting()));
+
+        return dailyCounts.entrySet().stream()
+                .map(entry -> DailyActivityResponse.builder()
+                        .date(entry.getKey())
+                        .sessionCount(entry.getValue())
+                        .build())
+                .toList();
+    }
+
+    private List<ExpansionUsageResponse> buildMostUsedExpansions(Long locationId, HistoryState state) {
+        return historyExpansionRepository.findMostUsedExpansions(locationId, state, PageRequest.of(0, TOP_N_DEFAULT)).stream()
+                .map(projection -> ExpansionUsageResponse.builder()
+                        .expansionId(projection.getExpansionId())
+                        .expansionName(projection.getExpansionName())
+                        .useCount(projection.getUseCount())
+                        .build())
+                .toList();
+    }
+
+    private Location requireLocation(Long locationId) {
+        return locationRepository.findById(locationId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Location not found"));
+    }
+}
