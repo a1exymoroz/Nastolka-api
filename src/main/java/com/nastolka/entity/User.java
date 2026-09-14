@@ -35,16 +35,25 @@ public class User {
     @Column(name = "google_sub", unique = true)
     private String googleSub;
 
+    @Column(name = "display_name")
+    private String displayName;
+
     public User() {
     }
 
     public User(Long id, String username, String password, String email, Role role, String googleSub) {
+        this(id, username, password, email, role, googleSub, null);
+    }
+
+    public User(Long id, String username, String password, String email, Role role, String googleSub,
+                 String displayName) {
         this.id = id;
         this.username = username;
         this.password = password;
         this.email = email;
         this.role = role;
         this.googleSub = googleSub;
+        this.displayName = displayName;
     }
 
     public static Builder builder() {
@@ -99,6 +108,14 @@ public class User {
         this.googleSub = googleSub;
     }
 
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
     public static class Builder {
         private Long id;
         private String username;
@@ -106,6 +123,7 @@ public class User {
         private String email;
         private Role role = Role.USER;
         private String googleSub;
+        private String displayName;
 
         public Builder id(Long id) {
             this.id = id;
@@ -137,8 +155,13 @@ public class User {
             return this;
         }
 
+        public Builder displayName(String displayName) {
+            this.displayName = displayName;
+            return this;
+        }
+
         public User build() {
-            return new User(id, username, password, email, role, googleSub);
+            return new User(id, username, password, email, role, googleSub, displayName);
         }
     }
 }
