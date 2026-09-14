@@ -11,14 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-### Added
-
-- Users can now set an optional display name via `GET`/`PUT /api/users/me`, a
-  new "current user profile" endpoint returning username, email, and display
-  name. The display name is settings-only for now: it does not yet appear in
-  leaderboards, chat, location shares, search results, or Telegram
-  notifications, which continue to show the username.
-
 ## [0.11.0] - 2026-09-14
 
 ### Added
