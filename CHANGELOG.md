@@ -11,6 +11,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-09-14
+
+### Added
+
+- New location statistics endpoints under `/api/locations/{locationId}/statistics`,
+  one per stats tab so each can be fetched independently: `/overview`
+  (sessions played, total/average play time, average rating), `/games`
+  (most played, top rated, library coverage), `/players` (leaderboard by
+  wins/points plus a separate most-active-players list), `/activity`
+  (sessions bucketed by week or month via `?granularity=WEEK|MONTH`),
+  `/expansions` (most-used expansions), and `/contribution-calendar`
+  (a GitHub-style daily session count over the trailing year). All
+  figures are derived from a location's finished game history.
+
+### Fixed
+
+- The activity trend and contribution calendar bucketed sessions by
+  UTC calendar day, but `playedAt` is sent as local midnight of the
+  chosen date; during CEST (UTC+2) that instant is still "yesterday"
+  in UTC, so a session played today could show up under yesterday's
+  date instead. Both now bucket by calendar day in `Europe/Warsaw`,
+  matching how `playedAt` is actually produced.
+
 ## [0.10.1] - 2026-09-14
 
 ### Fixed

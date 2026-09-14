@@ -15,4 +15,6 @@ public interface LocationGameRepository extends JpaRepository<LocationGame, Long
     Optional<LocationGame> findByLocationIdAndGameId(Long locationId, Long gameId);
 
     boolean existsByLocationIdAndGameId(Long locationId, Long gameId);
+
+    long countByLocationId(Long locationId);
 }
