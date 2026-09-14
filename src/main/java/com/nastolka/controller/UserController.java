@@ -1,9 +1,11 @@
 package com.nastolka.controller;
 
-import com.nastolka.dto.UpdateUserProfileRequest;
+import com.nastolka.dto.UpdateUsernameRequest;
 import com.nastolka.dto.UserProfileResponse;
+import com.nastolka.dto.UsernameUpdateResponse;
 import com.nastolka.dto.UserSearchResult;
 import com.nastolka.entity.User;
+import com.nastolka.security.JwtUtil;
 import com.nastolka.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -24,9 +26,11 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
+    private final JwtUtil jwtUtil;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, JwtUtil jwtUtil) {
         this.userService = userService;
+        this.jwtUtil = jwtUtil;
     }
 
     @GetMapping("/search")
@@ -55,20 +59,27 @@ public class UserController {
     }
 
     @PutMapping("/me")
-    public ResponseEntity<UserProfileResponse> updateCurrentUser(
+    public ResponseEntity<UsernameUpdateResponse> updateCurrentUser(
             @AuthenticationPrincipal String username,
-            @Valid @RequestBody UpdateUserProfileRequest request
+            @Valid @RequestBody UpdateUsernameRequest request
     ) {
         User user = userService.findByUsername(username)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-        user.setDisplayName(request.getDisplayName());
+        String newUsername = request.getUsername();
+        if (!newUsername.equals(user.getUsername()) && userService.existsByUsername(newUsername)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Username already exists");
+        }
+
+        user.setUsername(newUsername);
         User saved = userService.save(user);
 
-        return ResponseEntity.ok(toProfileResponse(saved));
+        String token = jwtUtil.generateToken(saved.getUsername());
+
+        return ResponseEntity.ok(new UsernameUpdateResponse(saved.getUsername(), saved.getEmail(), token));
     }
 
     private UserProfileResponse toProfileResponse(User user) {
-        return new UserProfileResponse(user.getUsername(), user.getEmail(), user.getDisplayName());
+        return new UserProfileResponse(user.getUsername(), user.getEmail());
     }
 }

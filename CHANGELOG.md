@@ -13,11 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- Users can now set an optional display name via `GET`/`PUT /api/users/me`, a
-  new "current user profile" endpoint returning username, email, and display
-  name. The display name is settings-only for now: it does not yet appear in
-  leaderboards, chat, location shares, search results, or Telegram
-  notifications, which continue to show the username.
+- Users can now change their own username via `PUT /api/users/me` (new
+  `GET /api/users/me` returns the current username/email). Renaming checks
+  the new username isn't already taken and returns a freshly issued JWT in
+  the response, since the token's subject is the username and the old token
+  stops resolving the moment the rename takes effect.
 
 ## [0.11.0] - 2026-09-14
 
