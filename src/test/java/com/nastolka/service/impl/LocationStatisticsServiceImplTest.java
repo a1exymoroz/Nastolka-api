@@ -1,7 +1,11 @@
 package com.nastolka.service.impl;
 
 import com.nastolka.dto.ActivityGranularity;
-import com.nastolka.dto.LocationStatisticsResponse;
+import com.nastolka.dto.ActivityStatistics;
+import com.nastolka.dto.DailyActivityResponse;
+import com.nastolka.dto.GameStatistics;
+import com.nastolka.dto.PlayerStatisticsResponse;
+import com.nastolka.dto.StatisticsOverview;
 import com.nastolka.entity.HistoryState;
 import com.nastolka.entity.Location;
 import com.nastolka.entity.User;
@@ -93,74 +97,110 @@ class LocationStatisticsServiceImplTest {
         return timing;
     }
 
-    @Test
-    void getStatistics_returnsZerosAndEmptyLists_whenNoFinishedSessions() {
-        LocationStatisticsResponse response = service.getStatistics(LOCATION_ID, "alice", ActivityGranularity.MONTH);
+    private PlayerStatsProjection playerStats(String username, long gamesPlayed, long wins, long totalPoints, double averagePoints) {
+        PlayerStatsProjection projection = mock(PlayerStatsProjection.class);
+        lenient().when(projection.getUsername()).thenReturn(username);
+        lenient().when(projection.getGamesPlayed()).thenReturn(gamesPlayed);
+        lenient().when(projection.getWins()).thenReturn(wins);
+        lenient().when(projection.getTotalPoints()).thenReturn(totalPoints);
+        lenient().when(projection.getAveragePoints()).thenReturn(averagePoints);
+        return projection;
+    }
 
-        assertThat(response.getOverview().getTotalFinishedSessions()).isZero();
-        assertThat(response.getOverview().getTotalPlayTimeMinutes()).isZero();
-        assertThat(response.getOverview().getAverageSessionLengthMinutes()).isNull();
-        assertThat(response.getOverview().getAverageRating()).isNull();
-        assertThat(response.getGameStats().getMostPlayedGames()).isEmpty();
-        assertThat(response.getGameStats().getTopRatedGames()).isEmpty();
-        assertThat(response.getGameStats().getLibraryCoverage().getCoveragePercentage()).isNull();
-        assertThat(response.getPlayerLeaderboard()).isEmpty();
-        assertThat(response.getMostActivePlayers()).isEmpty();
-        assertThat(response.getActivity().getBuckets()).isEmpty();
-        assertThat(response.getMostUsedExpansions()).isEmpty();
-        assertThat(response.getContributionCalendar()).isEmpty();
+    // --- overview ---
+
+    @Test
+    void getOverview_returnsZerosAndNullAverages_whenNoFinishedSessions() {
+        StatisticsOverview overview = service.getOverview(LOCATION_ID, "alice");
+
+        assertThat(overview.getTotalFinishedSessions()).isZero();
+        assertThat(overview.getTotalPlayTimeMinutes()).isZero();
+        assertThat(overview.getAverageSessionLengthMinutes()).isNull();
+        assertThat(overview.getAverageRating()).isNull();
     }
 
     @Test
-    void getStatistics_computesTotalAndAveragePlayTime_fromFinishedSessionDurations() {
+    void getOverview_computesTotalAndAveragePlayTime_fromFinishedSessionDurations() {
         Instant now = Instant.now();
         when(locationHistoryRepository.findSessionTimings(LOCATION_ID, HistoryState.FINISHED)).thenReturn(List.of(
                 sessionTiming(now, now.minus(60, ChronoUnit.MINUTES), now),
                 sessionTiming(now, now.minus(30, ChronoUnit.MINUTES), now)
         ));
 
-        LocationStatisticsResponse response = service.getStatistics(LOCATION_ID, "alice", ActivityGranularity.MONTH);
+        StatisticsOverview overview = service.getOverview(LOCATION_ID, "alice");
 
-        assertThat(response.getOverview().getTotalPlayTimeMinutes()).isEqualTo(90L);
-        assertThat(response.getOverview().getAverageSessionLengthMinutes()).isEqualTo(45.0);
+        assertThat(overview.getTotalPlayTimeMinutes()).isEqualTo(90L);
+        assertThat(overview.getAverageSessionLengthMinutes()).isEqualTo(45.0);
     }
 
     @Test
-    void getStatistics_computesLibraryCoveragePercentage() {
+    void getOverview_throwsForbidden_whenAccessDenied() {
+        doThrow(new ResponseStatusException(org.springframework.http.HttpStatus.FORBIDDEN, "You do not have access to this location"))
+                .when(accessGuard).requireViewAccess(location, user);
+
+        assertThatThrownBy(() -> service.getOverview(LOCATION_ID, "alice"))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("You do not have access to this location");
+    }
+
+    @Test
+    void getOverview_throwsNotFound_whenLocationMissing() {
+        when(locationRepository.findById(LOCATION_ID)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.getOverview(LOCATION_ID, "alice"))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Location not found");
+    }
+
+    // --- game stats ---
+
+    @Test
+    void getGameStatistics_computesLibraryCoveragePercentage() {
         when(locationHistoryRepository.countDistinctGamesPlayed(LOCATION_ID, HistoryState.FINISHED)).thenReturn(2L);
         when(locationGameRepository.countByLocationId(LOCATION_ID)).thenReturn(4L);
 
-        LocationStatisticsResponse response = service.getStatistics(LOCATION_ID, "alice", ActivityGranularity.MONTH);
+        GameStatistics gameStatistics = service.getGameStatistics(LOCATION_ID, "alice");
 
-        assertThat(response.getGameStats().getLibraryCoverage().getCoveragePercentage()).isEqualTo(50.0);
+        assertThat(gameStatistics.getLibraryCoverage().getCoveragePercentage()).isEqualTo(50.0);
     }
 
     @Test
-    void getStatistics_computesWinRateAndSortsLeaderboardByWinsDescending() {
+    void getGameStatistics_returnsNullCoverage_whenLibraryIsEmpty() {
+        GameStatistics gameStatistics = service.getGameStatistics(LOCATION_ID, "alice");
+
+        assertThat(gameStatistics.getLibraryCoverage().getCoveragePercentage()).isNull();
+    }
+
+    // --- player statistics ---
+
+    @Test
+    void getPlayerStatistics_computesWinRateAndSortsLeaderboardByWinsDescending() {
         PlayerStatsProjection alice = playerStats("alice", 4L, 3L, 30L, 7.5);
         PlayerStatsProjection bob = playerStats("bob", 4L, 1L, 20L, 5.0);
         when(historyPlayerRepository.findPlayerStats(LOCATION_ID, HistoryState.FINISHED)).thenReturn(List.of(bob, alice));
 
-        LocationStatisticsResponse response = service.getStatistics(LOCATION_ID, "alice", ActivityGranularity.MONTH);
+        PlayerStatisticsResponse response = service.getPlayerStatistics(LOCATION_ID, "alice");
 
-        assertThat(response.getPlayerLeaderboard()).extracting("username").containsExactly("alice", "bob");
-        assertThat(response.getPlayerLeaderboard().get(0).getWinRatePercentage()).isEqualTo(75.0);
-        assertThat(response.getPlayerLeaderboard().get(1).getWinRatePercentage()).isEqualTo(25.0);
+        assertThat(response.getLeaderboard()).extracting("username").containsExactly("alice", "bob");
+        assertThat(response.getLeaderboard().get(0).getWinRatePercentage()).isEqualTo(75.0);
+        assertThat(response.getLeaderboard().get(1).getWinRatePercentage()).isEqualTo(25.0);
     }
 
     @Test
-    void getStatistics_sortsMostActivePlayersByGamesPlayedDescending() {
+    void getPlayerStatistics_sortsMostActiveByGamesPlayedDescending() {
         PlayerStatsProjection alice = playerStats("alice", 2L, 1L, 10L, 5.0);
         PlayerStatsProjection bob = playerStats("bob", 6L, 1L, 10L, 5.0);
         when(historyPlayerRepository.findPlayerStats(LOCATION_ID, HistoryState.FINISHED)).thenReturn(List.of(alice, bob));
 
-        LocationStatisticsResponse response = service.getStatistics(LOCATION_ID, "alice", ActivityGranularity.MONTH);
+        PlayerStatisticsResponse response = service.getPlayerStatistics(LOCATION_ID, "alice");
 
-        assertThat(response.getMostActivePlayers()).extracting("username").containsExactly("bob", "alice");
+        assertThat(response.getMostActive()).extracting("username").containsExactly("bob", "alice");
     }
 
+    // --- activity trend ---
+
     @Test
-    void getStatistics_bucketsActivityByCalendarMonth() {
+    void getActivity_bucketsByCalendarMonth() {
         Instant sessionOne = Instant.parse("2026-03-05T10:00:00Z");
         Instant sessionTwo = Instant.parse("2026-03-20T10:00:00Z");
         when(locationHistoryRepository.findSessionTimings(LOCATION_ID, HistoryState.FINISHED)).thenReturn(List.of(
@@ -168,15 +208,15 @@ class LocationStatisticsServiceImplTest {
                 sessionTiming(sessionTwo, null, null)
         ));
 
-        LocationStatisticsResponse response = service.getStatistics(LOCATION_ID, "alice", ActivityGranularity.MONTH);
+        ActivityStatistics activity = service.getActivity(LOCATION_ID, "alice", ActivityGranularity.MONTH);
 
-        assertThat(response.getActivity().getBuckets()).hasSize(1);
-        assertThat(response.getActivity().getBuckets().get(0).getBucketStart().toString()).isEqualTo("2026-03-01");
-        assertThat(response.getActivity().getBuckets().get(0).getSessionCount()).isEqualTo(2L);
+        assertThat(activity.getBuckets()).hasSize(1);
+        assertThat(activity.getBuckets().get(0).getBucketStart().toString()).isEqualTo("2026-03-01");
+        assertThat(activity.getBuckets().get(0).getSessionCount()).isEqualTo(2L);
     }
 
     @Test
-    void getStatistics_bucketsActivityByCalendarWeek() {
+    void getActivity_bucketsByCalendarWeek() {
         Instant monday = Instant.parse("2026-03-02T10:00:00Z");
         Instant wednesdaySameWeek = Instant.parse("2026-03-04T10:00:00Z");
         Instant nextMonday = Instant.parse("2026-03-09T10:00:00Z");
@@ -186,17 +226,26 @@ class LocationStatisticsServiceImplTest {
                 sessionTiming(nextMonday, null, null)
         ));
 
-        LocationStatisticsResponse response = service.getStatistics(LOCATION_ID, "alice", ActivityGranularity.WEEK);
+        ActivityStatistics activity = service.getActivity(LOCATION_ID, "alice", ActivityGranularity.WEEK);
 
-        assertThat(response.getActivity().getBuckets()).hasSize(2);
-        assertThat(response.getActivity().getBuckets().get(0).getBucketStart().toString()).isEqualTo("2026-03-02");
-        assertThat(response.getActivity().getBuckets().get(0).getSessionCount()).isEqualTo(2L);
-        assertThat(response.getActivity().getBuckets().get(1).getBucketStart().toString()).isEqualTo("2026-03-09");
-        assertThat(response.getActivity().getBuckets().get(1).getSessionCount()).isEqualTo(1L);
+        assertThat(activity.getBuckets()).hasSize(2);
+        assertThat(activity.getBuckets().get(0).getBucketStart().toString()).isEqualTo("2026-03-02");
+        assertThat(activity.getBuckets().get(0).getSessionCount()).isEqualTo(2L);
+        assertThat(activity.getBuckets().get(1).getBucketStart().toString()).isEqualTo("2026-03-09");
+        assertThat(activity.getBuckets().get(1).getSessionCount()).isEqualTo(1L);
     }
 
+    // --- expansions ---
+
     @Test
-    void getStatistics_contributionCalendarExcludesSessionsOlderThanTrailingYear() {
+    void getMostUsedExpansions_returnsEmptyList_whenNoneRecorded() {
+        assertThat(service.getMostUsedExpansions(LOCATION_ID, "alice")).isEmpty();
+    }
+
+    // --- contribution calendar ---
+
+    @Test
+    void getContributionCalendar_excludesSessionsOlderThanTrailingYear() {
         Instant recent = Instant.now().minus(10, ChronoUnit.DAYS);
         Instant tooOld = Instant.now().minus(400, ChronoUnit.DAYS);
         when(locationHistoryRepository.findSessionTimings(LOCATION_ID, HistoryState.FINISHED)).thenReturn(List.of(
@@ -204,38 +253,9 @@ class LocationStatisticsServiceImplTest {
                 sessionTiming(tooOld, null, null)
         ));
 
-        LocationStatisticsResponse response = service.getStatistics(LOCATION_ID, "alice", ActivityGranularity.MONTH);
+        List<DailyActivityResponse> calendar = service.getContributionCalendar(LOCATION_ID, "alice");
 
-        assertThat(response.getContributionCalendar()).hasSize(1);
-        assertThat(response.getContributionCalendar().get(0).getSessionCount()).isEqualTo(1L);
-    }
-
-    @Test
-    void getStatistics_throwsForbidden_whenAccessDenied() {
-        doThrow(new ResponseStatusException(org.springframework.http.HttpStatus.FORBIDDEN, "You do not have access to this location"))
-                .when(accessGuard).requireViewAccess(location, user);
-
-        assertThatThrownBy(() -> service.getStatistics(LOCATION_ID, "alice", ActivityGranularity.MONTH))
-                .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("You do not have access to this location");
-    }
-
-    @Test
-    void getStatistics_throwsNotFound_whenLocationMissing() {
-        when(locationRepository.findById(LOCATION_ID)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> service.getStatistics(LOCATION_ID, "alice", ActivityGranularity.MONTH))
-                .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("Location not found");
-    }
-
-    private PlayerStatsProjection playerStats(String username, long gamesPlayed, long wins, long totalPoints, double averagePoints) {
-        PlayerStatsProjection projection = mock(PlayerStatsProjection.class);
-        lenient().when(projection.getUsername()).thenReturn(username);
-        lenient().when(projection.getGamesPlayed()).thenReturn(gamesPlayed);
-        lenient().when(projection.getWins()).thenReturn(wins);
-        lenient().when(projection.getTotalPoints()).thenReturn(totalPoints);
-        lenient().when(projection.getAveragePoints()).thenReturn(averagePoints);
-        return projection;
+        assertThat(calendar).hasSize(1);
+        assertThat(calendar.get(0).getSessionCount()).isEqualTo(1L);
     }
 }

@@ -15,14 +15,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- New `GET /api/locations/{locationId}/statistics` endpoint surfacing
-  aggregated insight from a location's finished game history: overview
-  totals (sessions played, total/average play time, average rating),
-  game stats (most played, top rated, library coverage), a player
-  leaderboard (wins, win rate, points, most active players), an
-  activity trend bucketed by week or month (`?granularity=WEEK|MONTH`),
-  most-used expansions, and a GitHub-style contribution calendar of
-  daily session counts over the trailing year.
+- New location statistics endpoints under `/api/locations/{locationId}/statistics`,
+  one per stats tab so each can be fetched independently: `/overview`
+  (sessions played, total/average play time, average rating), `/games`
+  (most played, top rated, library coverage), `/players` (leaderboard by
+  wins/points plus a separate most-active-players list), `/activity`
+  (sessions bucketed by week or month via `?granularity=WEEK|MONTH`),
+  `/expansions` (most-used expansions), and `/contribution-calendar`
+  (a GitHub-style daily session count over the trailing year). All
+  figures are derived from a location's finished game history.
 
 ## [0.10.1] - 2026-09-14
 
