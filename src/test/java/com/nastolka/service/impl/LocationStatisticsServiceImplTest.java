@@ -136,6 +136,28 @@ class LocationStatisticsServiceImplTest {
     }
 
     @Test
+    void getOverview_roundsAverageRatingAndAverageSessionLengthToTwoDecimals() {
+        // Real reported values: avg rating 3.6666666666666665, avg session length
+        // 4183.333333333333 (25100 total minutes across 6 sessions) — both should
+        // come back rounded to 2 decimal places instead of raw double precision.
+        Instant now = Instant.now();
+        when(locationHistoryRepository.findAverageRating(LOCATION_ID, HistoryState.FINISHED)).thenReturn(3.6666666666666665);
+        when(locationHistoryRepository.findSessionTimings(LOCATION_ID, HistoryState.FINISHED)).thenReturn(List.of(
+                sessionTiming(now, now.minus(25100, ChronoUnit.MINUTES), now),
+                sessionTiming(now, now, now),
+                sessionTiming(now, now, now),
+                sessionTiming(now, now, now),
+                sessionTiming(now, now, now),
+                sessionTiming(now, now, now)
+        ));
+
+        StatisticsOverview overview = service.getOverview(LOCATION_ID, "alice");
+
+        assertThat(overview.getAverageRating()).isEqualTo(3.67);
+        assertThat(overview.getAverageSessionLengthMinutes()).isEqualTo(4183.33);
+    }
+
+    @Test
     void getOverview_throwsForbidden_whenAccessDenied() {
         doThrow(new ResponseStatusException(org.springframework.http.HttpStatus.FORBIDDEN, "You do not have access to this location"))
                 .when(accessGuard).requireViewAccess(location, user);

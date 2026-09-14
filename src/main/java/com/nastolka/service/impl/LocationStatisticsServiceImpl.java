@@ -94,8 +94,8 @@ public class LocationStatisticsServiceImpl implements LocationStatisticsService 
         return StatisticsOverview.builder()
                 .totalFinishedSessions(totalFinishedSessions)
                 .totalPlayTimeMinutes(totalPlayTimeMinutes)
-                .averageSessionLengthMinutes(averageSessionLengthMinutes)
-                .averageRating(averageRating)
+                .averageSessionLengthMinutes(round2(averageSessionLengthMinutes))
+                .averageRating(round2(averageRating))
                 .build();
     }
 
@@ -117,7 +117,7 @@ public class LocationStatisticsServiceImpl implements LocationStatisticsService 
                 .map(projection -> GameRatingResponse.builder()
                         .gameId(projection.getGameId())
                         .gameName(projection.getGameName())
-                        .averageRating(projection.getAverageRating())
+                        .averageRating(round2(projection.getAverageRating()))
                         .ratingCount(projection.getRatingCount())
                         .build())
                 .toList();
@@ -129,7 +129,7 @@ public class LocationStatisticsServiceImpl implements LocationStatisticsService 
         LibraryCoverageResponse libraryCoverage = LibraryCoverageResponse.builder()
                 .gamesPlayed(gamesPlayed)
                 .totalGamesInLibrary(totalGamesInLibrary)
-                .coveragePercentage(coveragePercentage)
+                .coveragePercentage(round2(coveragePercentage))
                 .build();
 
         return GameStatistics.builder()
@@ -227,14 +227,23 @@ public class LocationStatisticsServiceImpl implements LocationStatisticsService 
         long gamesPlayed = projection.getGamesPlayed();
         long wins = projection.getWins();
         double winRatePercentage = gamesPlayed == 0 ? 0.0 : wins * 100.0 / gamesPlayed;
+        double averagePoints = projection.getAveragePoints() != null ? projection.getAveragePoints() : 0.0;
         return PlayerStatisticResponse.builder()
                 .username(projection.getUsername())
                 .gamesPlayed(gamesPlayed)
                 .wins(wins)
-                .winRatePercentage(winRatePercentage)
+                .winRatePercentage(round2(winRatePercentage))
                 .totalPoints(projection.getTotalPoints())
-                .averagePoints(projection.getAveragePoints() != null ? projection.getAveragePoints() : 0.0)
+                .averagePoints(round2(averagePoints))
                 .build();
+    }
+
+    private static double round2(double value) {
+        return Math.round(value * 100.0) / 100.0;
+    }
+
+    private static Double round2(Double value) {
+        return value == null ? null : round2(value.doubleValue());
     }
 
     private void requireAccess(Long locationId, String username) {
