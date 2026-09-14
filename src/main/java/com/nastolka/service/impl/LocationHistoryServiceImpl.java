@@ -34,6 +34,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -210,8 +211,6 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
 
     private void savePlayers(LocationHistory history, List<PlayerPlacementRequest> playerRequests, boolean requireRanking) {
         Location location = history.getLocation();
-        int playerCount = playerRequests.size();
-        Set<Integer> seenPlacements = new HashSet<>();
         Set<String> seenUsernames = new HashSet<>();
         List<HistoryPlayer> players = new ArrayList<>();
 
@@ -221,20 +220,9 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
                         "Player '" + playerRequest.getUsername() + "' is listed more than once");
             }
 
-            Integer placement = playerRequest.getPlacement();
-            if (requireRanking) {
-                if (placement == null) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                            "Placement is required for every player once the session is finished");
-                }
-                if (!seenPlacements.add(placement)) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                            "Placement " + placement + " is assigned to more than one player");
-                }
-                if (placement < 1 || placement > playerCount) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                            "Placements must be a ranking from 1 to " + playerCount + " with no gaps or ties");
-                }
+            if (requireRanking && playerRequest.getPoints() == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Points are required for every player once the session is finished");
             }
 
             User player = userRepository.findByUsername(playerRequest.getUsername())
@@ -251,9 +239,21 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
             HistoryPlayer historyPlayer = new HistoryPlayer();
             historyPlayer.setHistory(history);
             historyPlayer.setUser(player);
-            historyPlayer.setPlacement(placement);
+            historyPlayer.setPlacement(requireRanking ? null : playerRequest.getPlacement());
             historyPlayer.setPoints(playerRequest.getPoints());
             players.add(historyPlayer);
+        }
+
+        players.sort(Comparator
+                .comparing(HistoryPlayer::getPoints, Comparator.nullsLast(Comparator.reverseOrder()))
+                .thenComparing(historyPlayer -> historyPlayer.getUser().getUsername()));
+
+        if (requireRanking) {
+            // Placement is always derived from points, not the client-supplied value, so it never
+            // drifts out of sync with the score (ties are broken by username for a stable ranking).
+            for (int i = 0; i < players.size(); i++) {
+                players.get(i).setPlacement(i + 1);
+            }
         }
 
         historyPlayerRepository.saveAll(players);

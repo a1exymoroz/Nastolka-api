@@ -11,6 +11,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.10.1] - 2026-09-14
+
+### Fixed
+
+- Players in a location history entry were persisted in whatever order the
+  client submitted them, and for a finished game the ranking came from a
+  client-supplied `placement` that could drift out of sync with the actual
+  points (e.g. a player with fewer points ranked ahead of one with more).
+  `placement` is now always derived from points once a session is finished
+  (highest points first, ties broken by username), and points are required
+  for every player at that point. For sessions still in progress, players
+  are persisted sorted by points (highest first, nulls last) so read order
+  is meaningful even before a placement exists.
+
 ## [0.10.0] - 2026-08-12
 
 ### Added
