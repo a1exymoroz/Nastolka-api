@@ -15,9 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 - Users can now set an optional display name via `GET`/`PUT /api/users/me`, a
   new "current user profile" endpoint returning username, email, and display
-  name. The display name is settings-only for now: it does not yet appear in
-  leaderboards, chat, location shares, search results, or Telegram
-  notifications, which continue to show the username.
+  name.
+- Display name is now included everywhere a user is shown alongside their
+  username: location shares (`GET`/`POST /api/locations/{locationId}/shares`),
+  user search (`GET /api/users/search`), location leaderboards and
+  most-active-players stats, game history player results, and location chat
+  messages. Telegram "session finished" notifications now show a player's
+  display name instead of their username when one is set.
 
 ## [0.11.0] - 2026-09-14
 

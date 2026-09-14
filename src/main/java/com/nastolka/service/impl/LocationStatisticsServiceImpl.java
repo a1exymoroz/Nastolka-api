@@ -230,6 +230,7 @@ public class LocationStatisticsServiceImpl implements LocationStatisticsService 
         double averagePoints = projection.getAveragePoints() != null ? projection.getAveragePoints() : 0.0;
         return PlayerStatisticResponse.builder()
                 .username(projection.getUsername())
+                .displayName(projection.getDisplayName())
                 .gamesPlayed(gamesPlayed)
                 .wins(wins)
                 .winRatePercentage(round2(winRatePercentage))

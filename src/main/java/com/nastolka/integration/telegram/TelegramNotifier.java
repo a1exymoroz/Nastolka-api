@@ -90,7 +90,10 @@ public class TelegramNotifier {
             text.append('\n');
             for (int i = 0; i < players.size(); i++) {
                 PlayerResultResponse player = players.get(i);
-                text.append(rankMarker(i)).append(' ').append(HtmlUtils.htmlEscape(player.getUsername()));
+                String playerName = player.getDisplayName() != null && !player.getDisplayName().isBlank()
+                        ? player.getDisplayName()
+                        : player.getUsername();
+                text.append(rankMarker(i)).append(' ').append(HtmlUtils.htmlEscape(playerName));
                 if (player.getPoints() != null) {
                     text.append(" — <b>").append(player.getPoints()).append(" pts</b>");
                 }

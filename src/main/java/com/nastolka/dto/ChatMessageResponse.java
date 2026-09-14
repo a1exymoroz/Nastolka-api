@@ -7,6 +7,7 @@ public class ChatMessageResponse {
     private Long id;
     private Long locationId;
     private String senderUsername;
+    private String senderDisplayName;
     private boolean senderAdmin;
     private String content;
     private LocalDateTime createdAt;
@@ -42,6 +43,14 @@ public class ChatMessageResponse {
         this.senderUsername = senderUsername;
     }
 
+    public String getSenderDisplayName() {
+        return senderDisplayName;
+    }
+
+    public void setSenderDisplayName(String senderDisplayName) {
+        this.senderDisplayName = senderDisplayName;
+    }
+
     public boolean isSenderAdmin() {
         return senderAdmin;
     }
@@ -70,6 +79,7 @@ public class ChatMessageResponse {
         private Long id;
         private Long locationId;
         private String senderUsername;
+        private String senderDisplayName;
         private boolean senderAdmin;
         private String content;
         private LocalDateTime createdAt;
@@ -86,6 +96,11 @@ public class ChatMessageResponse {
 
         public Builder senderUsername(String senderUsername) {
             this.senderUsername = senderUsername;
+            return this;
+        }
+
+        public Builder senderDisplayName(String senderDisplayName) {
+            this.senderDisplayName = senderDisplayName;
             return this;
         }
 
@@ -109,6 +124,7 @@ public class ChatMessageResponse {
             response.id = id;
             response.locationId = locationId;
             response.senderUsername = senderUsername;
+            response.senderDisplayName = senderDisplayName;
             response.senderAdmin = senderAdmin;
             response.content = content;
             response.createdAt = createdAt;

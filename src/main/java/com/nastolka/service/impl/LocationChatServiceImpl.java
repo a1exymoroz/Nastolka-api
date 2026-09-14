@@ -68,6 +68,7 @@ public class LocationChatServiceImpl implements LocationChatService {
                 .id(message.getId())
                 .locationId(message.getLocation().getId())
                 .senderUsername(message.getSender().getUsername())
+                .senderDisplayName(message.getSender().getDisplayName())
                 .senderAdmin(message.getSender().getRole() == Role.ADMIN)
                 .content(message.getContent())
                 .createdAt(message.getCreatedAt())

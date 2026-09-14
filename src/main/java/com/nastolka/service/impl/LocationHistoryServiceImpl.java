@@ -386,6 +386,7 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
     private PlayerResultResponse toPlayerResponse(HistoryPlayer historyPlayer) {
         return PlayerResultResponse.builder()
                 .username(historyPlayer.getUser().getUsername())
+                .displayName(historyPlayer.getUser().getDisplayName())
                 .placement(historyPlayer.getPlacement())
                 .points(historyPlayer.getPoints())
                 .build();

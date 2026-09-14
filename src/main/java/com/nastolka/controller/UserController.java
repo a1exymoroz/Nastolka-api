@@ -39,8 +39,7 @@ public class UserController {
         }
 
         List<UserSearchResult> results = userService.search(query.trim(), username).stream()
-                .map(User::getUsername)
-                .map(UserSearchResult::new)
+                .map(user -> new UserSearchResult(user.getUsername(), user.getDisplayName()))
                 .toList();
 
         return ResponseEntity.ok(results);

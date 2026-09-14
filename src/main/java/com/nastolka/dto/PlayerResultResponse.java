@@ -3,6 +3,7 @@ package com.nastolka.dto;
 public class PlayerResultResponse {
 
     private String username;
+    private String displayName;
     private Integer placement;
     private Integer points;
 
@@ -19,6 +20,14 @@ public class PlayerResultResponse {
 
     public void setUsername(String username) {
         this.username = username;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
     }
 
     public Integer getPlacement() {
@@ -39,11 +48,17 @@ public class PlayerResultResponse {
 
     public static class Builder {
         private String username;
+        private String displayName;
         private Integer placement;
         private Integer points;
 
         public Builder username(String username) {
             this.username = username;
+            return this;
+        }
+
+        public Builder displayName(String displayName) {
+            this.displayName = displayName;
             return this;
         }
 
@@ -60,6 +75,7 @@ public class PlayerResultResponse {
         public PlayerResultResponse build() {
             PlayerResultResponse response = new PlayerResultResponse();
             response.username = username;
+            response.displayName = displayName;
             response.placement = placement;
             response.points = points;
             return response;

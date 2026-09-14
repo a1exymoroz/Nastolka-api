@@ -3,12 +3,14 @@ package com.nastolka.dto;
 public class UserSearchResult {
 
     private String username;
+    private String displayName;
 
     public UserSearchResult() {
     }
 
-    public UserSearchResult(String username) {
+    public UserSearchResult(String username, String displayName) {
         this.username = username;
+        this.displayName = displayName;
     }
 
     public String getUsername() {
@@ -17,5 +19,13 @@ public class UserSearchResult {
 
     public void setUsername(String username) {
         this.username = username;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
     }
 }

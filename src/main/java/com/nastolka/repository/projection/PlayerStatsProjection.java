@@ -4,6 +4,8 @@ public interface PlayerStatsProjection {
 
     String getUsername();
 
+    String getDisplayName();
+
     Long getGamesPlayed();
 
     Long getWins();

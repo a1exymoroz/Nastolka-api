@@ -3,6 +3,7 @@ package com.nastolka.dto;
 public class PlayerStatisticResponse {
 
     private String username;
+    private String displayName;
     private long gamesPlayed;
     private long wins;
     private double winRatePercentage;
@@ -22,6 +23,14 @@ public class PlayerStatisticResponse {
 
     public void setUsername(String username) {
         this.username = username;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
     }
 
     public long getGamesPlayed() {
@@ -66,6 +75,7 @@ public class PlayerStatisticResponse {
 
     public static class Builder {
         private String username;
+        private String displayName;
         private long gamesPlayed;
         private long wins;
         private double winRatePercentage;
@@ -74,6 +84,11 @@ public class PlayerStatisticResponse {
 
         public Builder username(String username) {
             this.username = username;
+            return this;
+        }
+
+        public Builder displayName(String displayName) {
+            this.displayName = displayName;
             return this;
         }
 
@@ -105,6 +120,7 @@ public class PlayerStatisticResponse {
         public PlayerStatisticResponse build() {
             PlayerStatisticResponse response = new PlayerStatisticResponse();
             response.username = username;
+            response.displayName = displayName;
             response.gamesPlayed = gamesPlayed;
             response.wins = wins;
             response.winRatePercentage = winRatePercentage;

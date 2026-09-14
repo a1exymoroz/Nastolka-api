@@ -95,6 +95,7 @@ public class LocationShareServiceImpl implements LocationShareService {
         return LocationShareResponse.builder()
                 .username(user.getUsername())
                 .email(user.getEmail())
+                .displayName(user.getDisplayName())
                 .build();
     }
 }
