@@ -163,7 +163,7 @@ docker-compose down -v
 
 ## Deployment
 
-The API runs on [Northflank](https://northflank.com/)'s free tier (always-on, no idle sleep, automatic HTTPS on a `*.northflank.app` domain). Northflank is linked directly to this GitHub repo and builds/deploys the existing [Dockerfile](Dockerfile) itself on every push to `main` — [.github/workflows/ci.yml](.github/workflows/ci.yml) only runs a compile check on PRs and pushes, it doesn't perform the deploy. The database (Neon Postgres) is unaffected — only the API container moves.
+The API runs on [Northflank](https://northflank.com/)'s free tier (always-on, no idle sleep, automatic HTTPS on a `*.northflank.app` domain). Northflank is linked directly to this GitHub repo and builds/deploys the existing [Dockerfile](Dockerfile) itself on every push to `main` — [.github/workflows/ci.yml](.github/workflows/ci.yml) only runs a compile check on PRs and pushes, it doesn't perform the deploy. The database (Supabase Postgres) is unaffected — only the API container moves.
 
 ### One-time Northflank setup
 
@@ -174,10 +174,10 @@ The API runs on [Northflank](https://northflank.com/)'s free tier (always-on, no
 5. **Environment variables** (Runtime variables — never committed to git):
    ```
    SPRING_PROFILES_ACTIVE=prod
-   POSTGRES_HOST=...
+   POSTGRES_HOST=...       # Supabase Session pooler host, e.g. aws-0-<region>.pooler.supabase.com
    POSTGRES_PORT=5432
-   POSTGRES_DB=...
-   POSTGRES_USER=...
+   POSTGRES_DB=postgres
+   POSTGRES_USER=...       # Supabase pooler username, e.g. postgres.<project-ref>
    POSTGRES_PASSWORD=...
    APP_JWT_SECRET=...
    APP_JWT_EXPIRATION_MS=86400000
@@ -191,5 +191,6 @@ The API runs on [Northflank](https://northflank.com/)'s free tier (always-on, no
    TELEGRAM_BOT_TOKEN=...
    TELEGRAM_BOT_SECRET=...
    ```
+   Use Supabase's **Session pooler** connection details (Project Settings → Database), not the direct connection — the direct host is IPv6-only unless you pay for Supabase's IPv4 add-on, and Northflank's egress is IPv4.
 
 After that, every merge to `main` triggers Northflank to rebuild the Dockerfile and redeploy automatically.

@@ -20,7 +20,7 @@ For the game deletion cascade behavior, see [Game deletion cascade](game-deletio
 | Tokens | JJWT 0.12.6 (HS256 signed JWT) |
 | Database | PostgreSQL 16 |
 | ORM | Hibernate via Spring Data JPA |
-| Connection pool | HikariCP (tuned for Neon in prod) |
+| Connection pool | HikariCP (tuned for a pooled free-tier connection in prod) |
 | Migrations | Flyway (`flyway-core` + `flyway-database-postgresql`) |
 | External API | BoardGameGeek XML API v2 (`RestClient`) |
 | Real-time | Spring WebSocket + STOMP (location chat) |
@@ -28,7 +28,7 @@ For the game deletion cascade behavior, see [Game deletion cascade](game-deletio
 | Rate limiting | Bucket4j (per-IP, auth + BGG import routes) |
 | Health checks | Spring Boot Actuator (`/actuator/health`) |
 | Local DB | Docker Compose (Postgres + Adminer) |
-| Production DB | Neon (managed Postgres, `sslmode=require`) |
+| Production DB | Supabase (managed Postgres via Supavisor session pooler, `sslmode=require`) |
 | Production host | Northflank (Docker web service, native GitHub build/deploy) |
 | Dev productivity | Spring Boot DevTools (hot reload) |
 
@@ -177,7 +177,7 @@ The JWT only carries the username (`sub` claim), issued-at, and expiry — signe
 | Piece | Technology | Notes |
 |-------|------------|-------|
 | Driver | `org.postgresql:postgresql` | JDBC to Postgres (runtime scope) |
-| Pool | HikariCP | Tuned for Neon in prod: `maximum-pool-size=5`, `minimum-idle=1`, `max-lifetime=180000`, `idle-timeout=150000` — retires connections proactively before Neon closes them server-side |
+| Pool | HikariCP | Tuned for Supabase's Supavisor pooler in prod: `maximum-pool-size=5`, `minimum-idle=1`, `max-lifetime=180000`, `idle-timeout=150000` — retires connections proactively before the pooler closes them server-side |
 | ORM | Hibernate | `ddl-auto=validate` — schema owned entirely by Flyway |
 | Repositories | Spring Data JPA | `JpaRepository` interfaces per entity |
 | Migrations | Flyway | `src/main/resources/db/migration/V*.sql` |
@@ -260,7 +260,7 @@ Loaded from environment (`.env.local` for dev, Northflank env vars for prod), vi
 
 | Variable | Used by |
 |----------|---------|
-| `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` | JDBC datasource (Neon in prod) |
+| `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` | JDBC datasource (Supabase Session pooler in prod) |
 | `APP_JWT_SECRET`, `APP_JWT_EXPIRATION_MS` | JWT signing / expiry |
 | `GOOGLE_CLIENT_ID` | Google Sign-In (`app.google.client-id`) |
 | `CORS_ALLOWED_ORIGINS` | Allowed frontend origin(s) |
@@ -301,7 +301,7 @@ Northflank service, linked directly to the GitHub repo
     → Dockerfile: maven:3.9-eclipse-temurin-21 build → eclipse-temurin:21-jre-alpine runtime
     → SPRING_PROFILES_ACTIVE=prod
     → Flyway migrates on startup (baseline-on-migrate=true)
-    → Neon PostgreSQL (POSTGRES_* env vars, sslmode=require)
+    → Supabase PostgreSQL via Session pooler (POSTGRES_* env vars, sslmode=require)
     → APP_JWT_SECRET set as a Northflank secret
 ```
 

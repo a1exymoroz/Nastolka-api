@@ -2,8 +2,7 @@
 .idea/
 *.iml
 .DS_Store
-.env.local
-.env.prod
+.env.*
 
 .vscode
 .claude
