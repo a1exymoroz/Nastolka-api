@@ -25,6 +25,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   (a GitHub-style daily session count over the trailing year). All
   figures are derived from a location's finished game history.
 
+### Fixed
+
+- The activity trend and contribution calendar bucketed sessions by
+  UTC calendar day, but `playedAt` is sent as local midnight of the
+  chosen date; during CEST (UTC+2) that instant is still "yesterday"
+  in UTC, so a session played today could show up under yesterday's
+  date instead. Both now bucket by calendar day in `Europe/Warsaw`,
+  matching how `playedAt` is actually produced.
+
 ## [0.10.1] - 2026-09-14
 
 ### Fixed

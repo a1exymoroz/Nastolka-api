@@ -25,6 +25,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
@@ -257,5 +259,40 @@ class LocationStatisticsServiceImplTest {
 
         assertThat(calendar).hasSize(1);
         assertThat(calendar.get(0).getSessionCount()).isEqualTo(1L);
+    }
+
+    @Test
+    void getContributionCalendar_bucketsByLocalCalendarDay_notUtcCalendarDay() {
+        // The client sends playedAt as local midnight of the chosen date. During CEST
+        // (UTC+2) that instant is still "yesterday" in UTC, so bucketing by UTC would
+        // misfile a session logged "today" under yesterday's date (the actual bug).
+        ZoneId warsaw = ZoneId.of("Europe/Warsaw");
+        LocalDate todayInWarsaw = LocalDate.now(warsaw);
+        Instant localMidnight = todayInWarsaw.atStartOfDay(warsaw).toInstant();
+
+        when(locationHistoryRepository.findSessionTimings(LOCATION_ID, HistoryState.FINISHED)).thenReturn(List.of(
+                sessionTiming(localMidnight, null, null)
+        ));
+
+        List<DailyActivityResponse> calendar = service.getContributionCalendar(LOCATION_ID, "alice");
+
+        assertThat(calendar).hasSize(1);
+        assertThat(calendar.get(0).getDate()).isEqualTo(todayInWarsaw);
+    }
+
+    @Test
+    void getActivity_bucketsByLocalCalendarDay_notUtcCalendarDay() {
+        ZoneId warsaw = ZoneId.of("Europe/Warsaw");
+        LocalDate todayInWarsaw = LocalDate.now(warsaw);
+        Instant localMidnight = todayInWarsaw.atStartOfDay(warsaw).toInstant();
+
+        when(locationHistoryRepository.findSessionTimings(LOCATION_ID, HistoryState.FINISHED)).thenReturn(List.of(
+                sessionTiming(localMidnight, null, null)
+        ));
+
+        ActivityStatistics activity = service.getActivity(LOCATION_ID, "alice", ActivityGranularity.MONTH);
+
+        assertThat(activity.getBuckets()).hasSize(1);
+        assertThat(activity.getBuckets().get(0).getBucketStart()).isEqualTo(todayInWarsaw.withDayOfMonth(1));
     }
 }

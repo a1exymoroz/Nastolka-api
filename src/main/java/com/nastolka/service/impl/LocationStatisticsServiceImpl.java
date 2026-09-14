@@ -31,7 +31,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
 import java.time.temporal.TemporalAdjusters;
 import java.util.Comparator;
 import java.util.List;
@@ -46,6 +46,11 @@ public class LocationStatisticsServiceImpl implements LocationStatisticsService 
     private static final long MIN_RATING_SAMPLE_SIZE = 2;
     private static final int CONTRIBUTION_CALENDAR_DAYS = 365;
     private static final HistoryState STATS_STATE = HistoryState.FINISHED;
+    // playedAt is stored as an instant, but the client sends it as local midnight of the
+    // chosen date (see V8__convert_location_history_timestamps_to_timestamptz.sql, which
+    // treats Europe/Warsaw as this app's reference zone) — bucketing by UTC would attribute
+    // a session played e.g. "2026-09-14" local to 2026-09-13 during CEST.
+    private static final ZoneId LOCATION_ZONE = ZoneId.of("Europe/Warsaw");
 
     private final LocationRepository locationRepository;
     private final LocationHistoryRepository locationHistoryRepository;
@@ -167,7 +172,7 @@ public class LocationStatisticsServiceImpl implements LocationStatisticsService 
         List<SessionTimingProjection> timings = locationHistoryRepository.findSessionTimings(locationId, STATS_STATE);
 
         Map<LocalDate, Long> buckets = timings.stream()
-                .map(timing -> timing.getPlayedAt().atZone(ZoneOffset.UTC).toLocalDate())
+                .map(timing -> timing.getPlayedAt().atZone(LOCATION_ZONE).toLocalDate())
                 .map(date -> granularity == ActivityGranularity.WEEK
                         ? date.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
                         : date.withDayOfMonth(1))
@@ -203,10 +208,10 @@ public class LocationStatisticsServiceImpl implements LocationStatisticsService 
     public List<DailyActivityResponse> getContributionCalendar(Long locationId, String username) {
         requireAccess(locationId, username);
 
-        LocalDate cutoff = LocalDate.now(ZoneOffset.UTC).minusDays(CONTRIBUTION_CALENDAR_DAYS - 1L);
+        LocalDate cutoff = LocalDate.now(LOCATION_ZONE).minusDays(CONTRIBUTION_CALENDAR_DAYS - 1L);
 
         Map<LocalDate, Long> dailyCounts = locationHistoryRepository.findSessionTimings(locationId, STATS_STATE).stream()
-                .map(timing -> timing.getPlayedAt().atZone(ZoneOffset.UTC).toLocalDate())
+                .map(timing -> timing.getPlayedAt().atZone(LOCATION_ZONE).toLocalDate())
                 .filter(date -> !date.isBefore(cutoff))
                 .collect(Collectors.groupingBy(date -> date, TreeMap::new, Collectors.counting()));
 
