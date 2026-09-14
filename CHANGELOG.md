@@ -11,6 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.10.1] - 2026-09-14
+
+### Fixed
+
+- Players in a location history entry were persisted in whatever order the
+  client submitted them, which left them unsorted when read back before a
+  `placement` was assigned (e.g. while a game is still in progress). Players
+  are now sorted by points (highest first, nulls last) before saving.
+
 ## [0.10.0] - 2026-08-12
 
 ### Added

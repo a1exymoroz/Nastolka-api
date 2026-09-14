@@ -34,6 +34,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -256,6 +257,7 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
             players.add(historyPlayer);
         }
 
+        players.sort(Comparator.comparing(HistoryPlayer::getPoints, Comparator.nullsLast(Comparator.reverseOrder())));
         historyPlayerRepository.saveAll(players);
     }
 
