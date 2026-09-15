@@ -2,6 +2,7 @@ package com.nastolka.dto;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 public class PlayerPlacementRequest {
 
@@ -12,6 +13,9 @@ public class PlayerPlacementRequest {
     private Integer placement;
 
     private Integer points;
+
+    @Size(max = 255)
+    private String meeples;
 
     public String getUsername() {
         return username;
@@ -35,5 +39,13 @@ public class PlayerPlacementRequest {
 
     public void setPoints(Integer points) {
         this.points = points;
+    }
+
+    public String getMeeples() {
+        return meeples;
+    }
+
+    public void setMeeples(String meeples) {
+        this.meeples = meeples;
     }
 }

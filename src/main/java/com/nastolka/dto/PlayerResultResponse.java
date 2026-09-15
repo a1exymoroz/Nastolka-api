@@ -5,6 +5,7 @@ public class PlayerResultResponse {
     private String username;
     private Integer placement;
     private Integer points;
+    private String meeples;
 
     public PlayerResultResponse() {
     }
@@ -37,10 +38,19 @@ public class PlayerResultResponse {
         this.points = points;
     }
 
+    public String getMeeples() {
+        return meeples;
+    }
+
+    public void setMeeples(String meeples) {
+        this.meeples = meeples;
+    }
+
     public static class Builder {
         private String username;
         private Integer placement;
         private Integer points;
+        private String meeples;
 
         public Builder username(String username) {
             this.username = username;
@@ -57,11 +67,17 @@ public class PlayerResultResponse {
             return this;
         }
 
+        public Builder meeples(String meeples) {
+            this.meeples = meeples;
+            return this;
+        }
+
         public PlayerResultResponse build() {
             PlayerResultResponse response = new PlayerResultResponse();
             response.username = username;
             response.placement = placement;
             response.points = points;
+            response.meeples = meeples;
             return response;
         }
     }

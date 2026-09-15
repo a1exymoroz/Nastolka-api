@@ -241,6 +241,7 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
             historyPlayer.setUser(player);
             historyPlayer.setPlacement(requireRanking ? null : playerRequest.getPlacement());
             historyPlayer.setPoints(playerRequest.getPoints());
+            historyPlayer.setMeeples(playerRequest.getMeeples());
             players.add(historyPlayer);
         }
 
@@ -388,6 +389,7 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
                 .username(historyPlayer.getUser().getUsername())
                 .placement(historyPlayer.getPlacement())
                 .points(historyPlayer.getPoints())
+                .meeples(historyPlayer.getMeeples())
                 .build();
     }
 

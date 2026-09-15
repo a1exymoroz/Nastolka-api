@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   the new username isn't already taken and returns a freshly issued JWT in
   the response, since the token's subject is the username and the old token
   stops resolving the moment the rename takes effect.
+- History log players now accept an optional free-text `meeples` field
+  (e.g. which color/token a player used). It's stored and returned as-is,
+  with no server-side validation of specific values — meaning is entirely
+  a client-side concern.
 
 ## [0.11.0] - 2026-09-14
 
