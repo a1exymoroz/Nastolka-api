@@ -7,7 +7,7 @@ Supabase's free tier (what this project runs on) doesn't include any automatic b
 
 On the 1st of every month (and on-demand via `workflow_dispatch`):
 
-1. `pg_dump`s the production Supabase database (custom format, via a `postgres:16` Docker
+1. `pg_dump`s the production Supabase database (custom format, via a `postgres:17` Docker
    container so the client version matches the server).
 2. Encrypts the dump with GPG (AES256, symmetric) using the `DB_BACKUP_PASSPHRASE` secret.
 3. Deletes the previous `db-backup` GitHub Release and publishes the new encrypted file as the
