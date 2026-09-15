@@ -36,6 +36,8 @@ public class HistoryPlayer {
 
     private Integer points;
 
+    private String meeples;
+
     public HistoryPlayer() {
     }
 
@@ -77,5 +79,13 @@ public class HistoryPlayer {
 
     public void setPoints(Integer points) {
         this.points = points;
+    }
+
+    public String getMeeples() {
+        return meeples;
+    }
+
+    public void setMeeples(String meeples) {
+        this.meeples = meeples;
     }
 }
