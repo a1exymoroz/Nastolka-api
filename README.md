@@ -194,3 +194,7 @@ The API runs on [Northflank](https://northflank.com/)'s free tier (always-on, no
    Use Supabase's **Session pooler** connection details (Project Settings → Database), not the direct connection — the direct host is IPv6-only unless you pay for Supabase's IPv4 add-on, and Northflank's egress is IPv4.
 
 After that, every merge to `main` triggers Northflank to rebuild the Dockerfile and redeploy automatically.
+
+### Database backups
+
+Supabase's free tier includes no automatic backups, so [.github/workflows/db-backup.yml](.github/workflows/db-backup.yml) takes one monthly and keeps exactly one (encrypted, replacing the previous). See [docs/BACKUPS.md](docs/BACKUPS.md) for required secrets and restore steps.

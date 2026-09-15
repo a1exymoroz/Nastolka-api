@@ -1,0 +1,49 @@
+name: Monthly DB Backup
+
+on:
+  schedule:
+    # 1st of every month, 03:00 UTC
+    - cron: "0 3 1 * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Dump database
+        env:
+          PGHOST: ${{ secrets.POSTGRES_HOST }}
+          PGPORT: ${{ secrets.POSTGRES_PORT }}
+          PGDATABASE: ${{ secrets.POSTGRES_DB }}
+          PGUSER: ${{ secrets.POSTGRES_USER }}
+          PGPASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          PGSSLMODE: require
+        run: |
+          docker run --rm \
+            -e PGHOST -e PGPORT -e PGDATABASE -e PGUSER -e PGPASSWORD -e PGSSLMODE \
+            -v "$PWD:/backup" postgres:16 \
+            pg_dump --no-owner --no-privileges -Fc -f /backup/db-backup.dump
+
+      - name: Encrypt dump
+        env:
+          DB_BACKUP_PASSPHRASE: ${{ secrets.DB_BACKUP_PASSPHRASE }}
+        run: |
+          gpg --symmetric --batch --yes --cipher-algo AES256 \
+            --passphrase "$DB_BACKUP_PASSPHRASE" \
+            -o db-backup.dump.gpg db-backup.dump
+          rm db-backup.dump
+
+      - name: Replace previous backup release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete db-backup --yes --cleanup-tag || true
+          gh release create db-backup db-backup.dump.gpg \
+            --title "DB backup $(date -u +%Y-%m-%d)" \
+            --notes "Encrypted monthly backup. Replaces the previous one — see docs/BACKUPS.md for restore steps."
