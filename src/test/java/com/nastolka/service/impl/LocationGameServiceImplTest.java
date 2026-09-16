@@ -82,6 +82,7 @@ class LocationGameServiceImplTest {
         service.addGame(LOCATION_ID, GAME_ID, "alice");
 
         assertThat(location.getUpdatedAt()).isCloseTo(Instant.now(), within(5, ChronoUnit.SECONDS));
+        assertThat(location.getUpdatedByUsername()).isEqualTo("alice");
     }
 
     @Test
@@ -94,5 +95,6 @@ class LocationGameServiceImplTest {
         service.removeGame(LOCATION_ID, GAME_ID, "alice");
 
         assertThat(location.getUpdatedAt()).isCloseTo(Instant.now(), within(5, ChronoUnit.SECONDS));
+        assertThat(location.getUpdatedByUsername()).isEqualTo("alice");
     }
 }

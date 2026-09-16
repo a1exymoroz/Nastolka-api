@@ -31,4 +31,15 @@ class LocationTest {
 
         assertThat(location.getUpdatedAt()).isAfter(previousUpdatedAt);
     }
+
+    @Test
+    void touch_setsUpdatedAtAndUpdatedByUsername() {
+        Location location = new Location();
+        User updatedBy = User.builder().id(1L).username("bob").build();
+
+        location.touch(updatedBy);
+
+        assertThat(location.getUpdatedAt()).isCloseTo(Instant.now(), within(2, ChronoUnit.SECONDS));
+        assertThat(location.getUpdatedByUsername()).isEqualTo("bob");
+    }
 }

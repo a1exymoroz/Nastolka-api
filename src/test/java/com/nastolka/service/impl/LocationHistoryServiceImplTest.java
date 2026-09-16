@@ -165,6 +165,7 @@ class LocationHistoryServiceImplTest {
         service.addHistory(LOCATION_ID, request, "alice");
 
         assertThat(location.getUpdatedAt()).isCloseTo(Instant.now(), within(5, ChronoUnit.SECONDS));
+        assertThat(location.getUpdatedByUsername()).isEqualTo("alice");
     }
 
     @Test
@@ -178,5 +179,6 @@ class LocationHistoryServiceImplTest {
         service.deleteHistory(LOCATION_ID, historyId, "alice");
 
         assertThat(location.getUpdatedAt()).isCloseTo(Instant.now(), within(5, ChronoUnit.SECONDS));
+        assertThat(location.getUpdatedByUsername()).isEqualTo("alice");
     }
 }
