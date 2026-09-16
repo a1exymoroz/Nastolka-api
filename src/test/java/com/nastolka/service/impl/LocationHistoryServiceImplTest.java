@@ -2,7 +2,10 @@ package com.nastolka.service.impl;
 
 import com.nastolka.dto.CreateHistoryRequest;
 import com.nastolka.dto.HistoryResponse;
+import com.nastolka.dto.PlayerPlacementRequest;
 import com.nastolka.entity.Game;
+import com.nastolka.entity.HistoryOutcome;
+import com.nastolka.entity.HistoryPlayer;
 import com.nastolka.entity.HistoryState;
 import com.nastolka.entity.Location;
 import com.nastolka.entity.LocationHistory;
@@ -21,6 +24,7 @@ import com.nastolka.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.server.ResponseStatusException;
@@ -35,6 +39,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -166,6 +171,27 @@ class LocationHistoryServiceImplTest {
 
         assertThat(location.getUpdatedAt()).isCloseTo(Instant.now(), within(5, ChronoUnit.SECONDS));
         assertThat(location.getUpdatedByUsername()).isEqualTo("alice");
+    }
+
+    @Test
+    void addHistory_succeedsWithoutPlayerPoints_whenOutcomeIsSet() {
+        CreateHistoryRequest request = requestWithState(HistoryState.FINISHED);
+        request.setOutcome(HistoryOutcome.WON);
+        PlayerPlacementRequest player = new PlayerPlacementRequest();
+        player.setUsername("alice");
+        request.setPlayers(List.of(player));
+
+        when(userRepository.findByUsername("alice")).thenReturn(Optional.of(user));
+
+        HistoryResponse response = service.addHistory(LOCATION_ID, request, "alice");
+
+        assertThat(response.getOutcome()).isEqualTo(HistoryOutcome.WON);
+
+        ArgumentCaptor<List<HistoryPlayer>> playersCaptor = ArgumentCaptor.forClass(List.class);
+        verify(historyPlayerRepository).saveAll(playersCaptor.capture());
+        assertThat(playersCaptor.getValue()).hasSize(1);
+        assertThat(playersCaptor.getValue().get(0).getPoints()).isNull();
+        assertThat(playersCaptor.getValue().get(0).getPlacement()).isNull();
     }
 
     @Test

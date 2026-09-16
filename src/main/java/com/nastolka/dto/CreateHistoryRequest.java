@@ -1,5 +1,6 @@
 package com.nastolka.dto;
 
+import com.nastolka.entity.HistoryOutcome;
 import com.nastolka.entity.HistoryState;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -32,6 +33,8 @@ public class CreateHistoryRequest {
     private List<@Valid PlayerPlacementRequest> players;
 
     private List<Long> expansionIds;
+
+    private HistoryOutcome outcome;
 
     public Long getGameId() {
         return gameId;
@@ -95,5 +98,13 @@ public class CreateHistoryRequest {
 
     public void setExpansionIds(List<Long> expansionIds) {
         this.expansionIds = expansionIds;
+    }
+
+    public HistoryOutcome getOutcome() {
+        return outcome;
+    }
+
+    public void setOutcome(HistoryOutcome outcome) {
+        this.outcome = outcome;
     }
 }
