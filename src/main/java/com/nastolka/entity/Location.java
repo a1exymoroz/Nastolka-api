@@ -7,7 +7,11 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+
+import java.time.Instant;
 
 @Entity
 @Table(name = "locations")
@@ -30,7 +34,16 @@ public class Location {
     @Column(name = "telegram_chat_id", length = 64, unique = true)
     private String telegramChatId;
 
+    @Column(name = "updated_at", nullable = false)
+    private Instant updatedAt;
+
     public Location() {
+    }
+
+    @PrePersist
+    @PreUpdate
+    private void touchUpdatedAt() {
+        updatedAt = Instant.now();
     }
 
     public User getOwner() {
@@ -71,5 +84,9 @@ public class Location {
 
     public void setTelegramChatId(String telegramChatId) {
         this.telegramChatId = telegramChatId;
+    }
+
+    public Instant getUpdatedAt() {
+        return updatedAt;
     }
 }

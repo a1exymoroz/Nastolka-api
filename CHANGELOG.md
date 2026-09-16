@@ -22,6 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   (e.g. which color/token a player used). It's stored and returned as-is,
   with no server-side validation of specific values — meaning is entirely
   a client-side concern.
+- Locations returned by `GET /api/locations` are now sorted by most recently
+  updated first. Editing a location (name, description, or Telegram chat
+  link) refreshes its `updatedAt` timestamp, which is now also included in
+  the location response.
 
 ## [0.11.0] - 2026-09-14
 
