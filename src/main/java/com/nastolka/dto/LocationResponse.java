@@ -1,5 +1,7 @@
 package com.nastolka.dto;
 
+import java.time.Instant;
+
 public class LocationResponse {
 
     private Long id;
@@ -7,6 +9,7 @@ public class LocationResponse {
     private String description;
     private String ownerUsername;
     private String telegramChatId;
+    private Instant updatedAt;
 
     public LocationResponse() {
     }
@@ -55,12 +58,21 @@ public class LocationResponse {
         this.telegramChatId = telegramChatId;
     }
 
+    public Instant getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(Instant updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
     public static class Builder {
         private Long id;
         private String name;
         private String description;
         private String ownerUsername;
         private String telegramChatId;
+        private Instant updatedAt;
 
         public Builder id(Long id) {
             this.id = id;
@@ -87,6 +99,11 @@ public class LocationResponse {
             return this;
         }
 
+        public Builder updatedAt(Instant updatedAt) {
+            this.updatedAt = updatedAt;
+            return this;
+        }
+
         public LocationResponse build() {
             LocationResponse response = new LocationResponse();
             response.id = id;
@@ -94,6 +111,7 @@ public class LocationResponse {
             response.description = description;
             response.ownerUsername = ownerUsername;
             response.telegramChatId = telegramChatId;
+            response.updatedAt = updatedAt;
             return response;
         }
     }

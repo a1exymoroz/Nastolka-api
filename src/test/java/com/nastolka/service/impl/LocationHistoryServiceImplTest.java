@@ -157,4 +157,26 @@ class LocationHistoryServiceImplTest {
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("Finished time cannot be before started time");
     }
+
+    @Test
+    void addHistory_touchesLocationUpdatedAt() {
+        CreateHistoryRequest request = requestWithState(HistoryState.CREATED);
+
+        service.addHistory(LOCATION_ID, request, "alice");
+
+        assertThat(location.getUpdatedAt()).isCloseTo(Instant.now(), within(5, ChronoUnit.SECONDS));
+    }
+
+    @Test
+    void deleteHistory_touchesLocationUpdatedAt() {
+        Long historyId = 99L;
+        LocationHistory history = new LocationHistory();
+        history.setId(historyId);
+        history.setLocation(location);
+        when(locationHistoryRepository.findByIdAndLocationId(historyId, LOCATION_ID)).thenReturn(Optional.of(history));
+
+        service.deleteHistory(LOCATION_ID, historyId, "alice");
+
+        assertThat(location.getUpdatedAt()).isCloseTo(Instant.now(), within(5, ChronoUnit.SECONDS));
+    }
 }

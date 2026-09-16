@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -41,6 +42,7 @@ public class LocationServiceImpl implements LocationService {
 
         if (requester.getRole() == Role.ADMIN) {
             return locationRepository.findAll().stream()
+                    .sorted(Comparator.comparing(Location::getUpdatedAt).reversed())
                     .map(this::toResponse)
                     .toList();
         }
@@ -51,6 +53,7 @@ public class LocationServiceImpl implements LocationService {
                 .toList();
 
         return Stream.concat(owned.stream(), shared.stream())
+                .sorted(Comparator.comparing(Location::getUpdatedAt).reversed())
                 .map(this::toResponse)
                 .toList();
     }
@@ -134,6 +137,7 @@ public class LocationServiceImpl implements LocationService {
                 .description(location.getDescription())
                 .ownerUsername(location.getOwner().getUsername())
                 .telegramChatId(location.getTelegramChatId())
+                .updatedAt(location.getUpdatedAt())
                 .build();
     }
 }
