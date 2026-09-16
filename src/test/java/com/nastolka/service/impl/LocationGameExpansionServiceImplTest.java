@@ -90,6 +90,7 @@ class LocationGameExpansionServiceImplTest {
         service.addExpansion(LOCATION_ID, GAME_ID, EXPANSION_ID, "alice");
 
         assertThat(location.getUpdatedAt()).isCloseTo(Instant.now(), within(5, ChronoUnit.SECONDS));
+        assertThat(location.getUpdatedByUsername()).isEqualTo("alice");
     }
 
     @Test
@@ -103,5 +104,6 @@ class LocationGameExpansionServiceImplTest {
         service.removeExpansion(LOCATION_ID, GAME_ID, EXPANSION_ID, "alice");
 
         assertThat(location.getUpdatedAt()).isCloseTo(Instant.now(), within(5, ChronoUnit.SECONDS));
+        assertThat(location.getUpdatedByUsername()).isEqualTo("alice");
     }
 }

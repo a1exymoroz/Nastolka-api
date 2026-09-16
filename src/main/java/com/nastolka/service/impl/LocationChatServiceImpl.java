@@ -54,6 +54,8 @@ public class LocationChatServiceImpl implements LocationChatService {
         message.setSender(requester);
         message.setContent(request.getContent());
         message = locationChatMessageRepository.save(message);
+        location.touch(requester);
+        locationRepository.save(location);
 
         return toResponse(message);
     }

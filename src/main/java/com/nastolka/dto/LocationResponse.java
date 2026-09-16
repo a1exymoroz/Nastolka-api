@@ -10,6 +10,7 @@ public class LocationResponse {
     private String ownerUsername;
     private String telegramChatId;
     private Instant updatedAt;
+    private String updatedByUsername;
 
     public LocationResponse() {
     }
@@ -66,6 +67,14 @@ public class LocationResponse {
         this.updatedAt = updatedAt;
     }
 
+    public String getUpdatedByUsername() {
+        return updatedByUsername;
+    }
+
+    public void setUpdatedByUsername(String updatedByUsername) {
+        this.updatedByUsername = updatedByUsername;
+    }
+
     public static class Builder {
         private Long id;
         private String name;
@@ -73,6 +82,7 @@ public class LocationResponse {
         private String ownerUsername;
         private String telegramChatId;
         private Instant updatedAt;
+        private String updatedByUsername;
 
         public Builder id(Long id) {
             this.id = id;
@@ -104,6 +114,11 @@ public class LocationResponse {
             return this;
         }
 
+        public Builder updatedByUsername(String updatedByUsername) {
+            this.updatedByUsername = updatedByUsername;
+            return this;
+        }
+
         public LocationResponse build() {
             LocationResponse response = new LocationResponse();
             response.id = id;
@@ -112,6 +127,7 @@ public class LocationResponse {
             response.ownerUsername = ownerUsername;
             response.telegramChatId = telegramChatId;
             response.updatedAt = updatedAt;
+            response.updatedByUsername = updatedByUsername;
             return response;
         }
     }

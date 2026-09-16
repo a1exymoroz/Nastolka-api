@@ -1,5 +1,6 @@
 package com.nastolka.service.impl;
 
+import com.nastolka.dto.CreateLocationRequest;
 import com.nastolka.dto.LocationResponse;
 import com.nastolka.entity.Location;
 import com.nastolka.entity.LocationShare;
@@ -17,8 +18,10 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
@@ -107,5 +110,29 @@ class LocationServiceImplTest {
         List<LocationResponse> responses = service.getAllLocations("alice");
 
         assertThat(responses).extracting(LocationResponse::getId).containsExactly(2L, 1L);
+    }
+
+    @Test
+    void createLocation_recordsUpdatedByUsername() {
+        when(locationRepository.save(any(Location.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        CreateLocationRequest request = new CreateLocationRequest();
+        request.setName("New Location");
+
+        LocationResponse response = service.createLocation(request, "alice");
+
+        assertThat(response.getUpdatedByUsername()).isEqualTo("alice");
+    }
+
+    @Test
+    void updateLocation_recordsUpdatedByUsername() {
+        Location location = locationUpdatedAt(1L, Instant.now().minus(1, ChronoUnit.DAYS));
+        when(locationRepository.findById(1L)).thenReturn(Optional.of(location));
+        when(locationRepository.save(any(Location.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        CreateLocationRequest request = new CreateLocationRequest();
+        request.setName("Renamed");
+
+        LocationResponse response = service.updateLocation(1L, request, "alice");
+
+        assertThat(response.getUpdatedByUsername()).isEqualTo("alice");
     }
 }

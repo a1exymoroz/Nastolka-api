@@ -37,6 +37,9 @@ public class Location {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
+    @Column(name = "updated_by_username")
+    private String updatedByUsername;
+
     public Location() {
     }
 
@@ -90,9 +93,15 @@ public class Location {
         return updatedAt;
     }
 
-    // Called when a related resource (game, expansion, history entry) changes without touching
-    // this entity's own columns, since @PreUpdate wouldn't otherwise fire.
-    public void touch() {
+    public String getUpdatedByUsername() {
+        return updatedByUsername;
+    }
+
+    // Called whenever this location or a related resource (game, expansion, history entry,
+    // chat message) changes, to record who did it. @PreUpdate/@PrePersist can't fill in
+    // updatedByUsername on their own since lifecycle callbacks have no access to the acting user.
+    public void touch(User updatedBy) {
         updatedAt = Instant.now();
+        updatedByUsername = updatedBy.getUsername();
     }
 }

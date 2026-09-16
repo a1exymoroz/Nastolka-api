@@ -155,7 +155,7 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
 
         savePlayers(history, request.getPlayers(), request.getState() == HistoryState.FINISHED);
         saveExpansions(history, request.getExpansionIds());
-        location.touch();
+        location.touch(requester);
         locationRepository.save(location);
 
         HistoryResponse response = toResponse(history);
@@ -192,7 +192,7 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
         historyExpansionRepository.deleteByHistoryId(history.getId());
         historyExpansionRepository.flush();
         saveExpansions(history, request.getExpansionIds());
-        location.touch();
+        location.touch(requester);
         locationRepository.save(location);
 
         HistoryResponse response = toResponse(history);
@@ -211,7 +211,7 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
 
         LocationHistory history = requireHistory(locationId, historyId);
         locationHistoryRepository.delete(history);
-        location.touch();
+        location.touch(requester);
         locationRepository.save(location);
     }
 

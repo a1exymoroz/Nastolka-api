@@ -81,7 +81,7 @@ public class LocationGameExpansionServiceImpl implements LocationGameExpansionSe
         locationGameExpansion.setLocationGame(locationGame);
         locationGameExpansion.setExpansion(expansion);
         locationGameExpansionRepository.save(locationGameExpansion);
-        location.touch();
+        location.touch(requester);
         locationRepository.save(location);
 
         return toResponse(expansion);
@@ -107,7 +107,7 @@ public class LocationGameExpansionServiceImpl implements LocationGameExpansionSe
         locationGameExpansion.setLocationGame(locationGame);
         locationGameExpansion.setExpansion(expansion);
         locationGameExpansionRepository.save(locationGameExpansion);
-        location.touch();
+        location.touch(requester);
         locationRepository.save(location);
 
         return toResponse(expansion);
@@ -124,7 +124,7 @@ public class LocationGameExpansionServiceImpl implements LocationGameExpansionSe
                 .findByLocationGameIdAndExpansionId(locationGame.getId(), expansionId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Expansion not found in this location"));
         locationGameExpansionRepository.delete(locationGameExpansion);
-        location.touch();
+        location.touch(requester);
         locationRepository.save(location);
     }
 

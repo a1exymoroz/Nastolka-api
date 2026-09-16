@@ -26,9 +26,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   updated first. Editing a location (name, description, or Telegram chat
   link) refreshes its `updatedAt` timestamp, which is now also included in
   the location response. The timestamp also refreshes when a game or
-  expansion is added to or removed from the location, or when a history log
-  entry is added, edited, or deleted — so recently active locations sort to
-  the top too.
+  expansion is added to or removed from the location, when a history log
+  entry is added, edited, or deleted, or when a chat message is sent — so
+  recently active locations sort to the top too. The location response also
+  now includes `updatedByUsername`, the username of whoever triggered the
+  most recent change.
 
 ## [0.11.0] - 2026-09-14
 
