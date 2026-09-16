@@ -215,6 +215,17 @@ no photo upload/storage code of its own.
 The backend previously stored photos itself; that code was removed when
 real-time chat (below) replaced it as the way to share moments from a session.
 
+At current volume — one re-encoded JPEG per history entry, typically well under
+1MB — this is nowhere near Netlify Blobs' free-tier limits, so cost/capacity is
+not a reason to move providers. The actual cost of the current design is the
+extra HTTP round-trip on every photo operation (the Netlify Function has no way
+to verify this backend's JWT itself, so it calls back into
+`GET /api/locations/{locationId}` just to check access) and having photo logic
+split across two repos. If that overhead is ever worth removing, the cheap fix
+is having the Netlify Function verify the JWT locally (shared secret / public
+key) instead of calling back into this API — no need to migrate the storage
+provider itself.
+
 ---
 
 ## Real-time location chat
