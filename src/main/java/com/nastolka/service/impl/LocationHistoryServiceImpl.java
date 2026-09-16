@@ -155,6 +155,8 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
 
         savePlayers(history, request.getPlayers(), request.getState() == HistoryState.FINISHED);
         saveExpansions(history, request.getExpansionIds());
+        location.touch();
+        locationRepository.save(location);
 
         HistoryResponse response = toResponse(history);
         if (response.getState() == HistoryState.FINISHED) {
@@ -190,6 +192,8 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
         historyExpansionRepository.deleteByHistoryId(history.getId());
         historyExpansionRepository.flush();
         saveExpansions(history, request.getExpansionIds());
+        location.touch();
+        locationRepository.save(location);
 
         HistoryResponse response = toResponse(history);
         if (previousState != HistoryState.FINISHED && response.getState() == HistoryState.FINISHED) {
@@ -207,6 +211,8 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
 
         LocationHistory history = requireHistory(locationId, historyId);
         locationHistoryRepository.delete(history);
+        location.touch();
+        locationRepository.save(location);
     }
 
     private void savePlayers(LocationHistory history, List<PlayerPlacementRequest> playerRequests, boolean requireRanking) {

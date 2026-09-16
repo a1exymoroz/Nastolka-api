@@ -89,4 +89,10 @@ public class Location {
     public Instant getUpdatedAt() {
         return updatedAt;
     }
+
+    // Called when a related resource (game, expansion, history entry) changes without touching
+    // this entity's own columns, since @PreUpdate wouldn't otherwise fire.
+    public void touch() {
+        updatedAt = Instant.now();
+    }
 }

@@ -104,6 +104,8 @@ public class LocationGameServiceImpl implements LocationGameService {
         locationGame.setLocation(location);
         locationGame.setGame(game);
         locationGameRepository.save(locationGame);
+        location.touch();
+        locationRepository.save(location);
 
         return toResponse(game, List.of(), List.of());
     }
@@ -127,6 +129,8 @@ public class LocationGameServiceImpl implements LocationGameService {
         locationGame.setLocation(location);
         locationGame.setGame(game);
         locationGameRepository.save(locationGame);
+        location.touch();
+        locationRepository.save(location);
 
         return toResponse(game, List.of(), List.of());
     }
@@ -140,6 +144,8 @@ public class LocationGameServiceImpl implements LocationGameService {
         LocationGame locationGame = locationGameRepository.findByLocationIdAndGameId(locationId, gameId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Game not found in this location"));
         locationGameRepository.delete(locationGame);
+        location.touch();
+        locationRepository.save(location);
     }
 
     private Location requireLocation(Long locationId) {
