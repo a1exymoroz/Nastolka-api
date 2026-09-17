@@ -1,0 +1,4 @@
+ALTER TABLE location_shares
+    ADD COLUMN can_edit_info BOOLEAN NOT NULL DEFAULT FALSE,
+    ADD COLUMN can_manage_games BOOLEAN NOT NULL DEFAULT FALSE,
+    ADD COLUMN can_manage_history BOOLEAN NOT NULL DEFAULT FALSE;

@@ -207,4 +207,41 @@ class LocationHistoryServiceImplTest {
         assertThat(location.getUpdatedAt()).isCloseTo(Instant.now(), within(5, ChronoUnit.SECONDS));
         assertThat(location.getUpdatedByUsername()).isEqualTo("alice");
     }
+
+    @Test
+    void addHistory_checksHistoryManageAccess_notBroadManageAccess() {
+        CreateHistoryRequest request = requestWithState(HistoryState.CREATED);
+
+        service.addHistory(LOCATION_ID, request, "alice");
+
+        verify(accessGuard).requireHistoryManageAccess(location, user);
+    }
+
+    @Test
+    void updateHistory_checksHistoryManageAccess_notBroadManageAccess() {
+        Long historyId = 99L;
+        LocationHistory history = new LocationHistory();
+        history.setId(historyId);
+        history.setLocation(location);
+        history.setGame(game);
+        when(locationHistoryRepository.findByIdAndLocationId(historyId, LOCATION_ID)).thenReturn(Optional.of(history));
+        CreateHistoryRequest request = requestWithState(HistoryState.CREATED);
+
+        service.updateHistory(LOCATION_ID, historyId, request, "alice");
+
+        verify(accessGuard).requireHistoryManageAccess(location, user);
+    }
+
+    @Test
+    void deleteHistory_checksHistoryManageAccess_notBroadManageAccess() {
+        Long historyId = 99L;
+        LocationHistory history = new LocationHistory();
+        history.setId(historyId);
+        history.setLocation(location);
+        when(locationHistoryRepository.findByIdAndLocationId(historyId, LOCATION_ID)).thenReturn(Optional.of(history));
+
+        service.deleteHistory(LOCATION_ID, historyId, "alice");
+
+        verify(accessGuard).requireHistoryManageAccess(location, user);
+    }
 }

@@ -13,6 +13,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Location owners can now grant shared users granular edit permissions —
+  editing the location's own info, managing its games/expansions, and
+  managing its history log entries — independently of each other, via new
+  `canEditInfo`/`canManageGames`/`canManageHistory` flags on a location
+  share. Permissions can be set when sharing (`POST
+  /api/locations/{locationId}/shares`) or changed afterward (`PATCH
+  /api/locations/{locationId}/shares/{targetUsername}`); a shared user with
+  no permissions granted keeps today's view-only access, and deleting a
+  location or managing shares themselves stays owner/admin-only.
 - Real-time cooperative game-picking sessions per location, under
   `/api/locations/{locationId}/pick-sessions` (REST for create/state-fetch)
   and STOMP destinations under `/app/locations/{locationId}/pick-sessions/{sessionId}`

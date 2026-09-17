@@ -1,6 +1,7 @@
 package com.nastolka.service.impl;
 
 import com.nastolka.entity.Location;
+import com.nastolka.entity.LocationShare;
 import com.nastolka.entity.Role;
 import com.nastolka.entity.User;
 import com.nastolka.repository.LocationShareRepository;
@@ -11,6 +12,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.util.function.Predicate;
 
 @Component
 public class LocationAccessGuard {
@@ -59,6 +62,35 @@ public class LocationAccessGuard {
         boolean shared = locationShareRepository.existsByLocationIdAndUserId(location.getId(), requester.getId());
         if (!shared) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have access to this location");
+        }
+    }
+
+    public void requireInfoEditAccess(Location location, User requester) {
+        requireSharePermission(location, requester, LocationShare::isCanEditInfo,
+                "You do not have permission to edit this location");
+    }
+
+    public void requireGamesManageAccess(Location location, User requester) {
+        requireSharePermission(location, requester, LocationShare::isCanManageGames,
+                "You do not have permission to manage games for this location");
+    }
+
+    public void requireHistoryManageAccess(Location location, User requester) {
+        requireSharePermission(location, requester, LocationShare::isCanManageHistory,
+                "You do not have permission to manage history for this location");
+    }
+
+    private void requireSharePermission(Location location, User requester,
+            Predicate<LocationShare> permissionCheck, String message) {
+        if (canManage(location, requester)) {
+            return;
+        }
+        boolean allowed = locationShareRepository
+                .findByLocationIdAndUserId(location.getId(), requester.getId())
+                .map(permissionCheck::test)
+                .orElse(false);
+        if (!allowed) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, message);
         }
     }
 }

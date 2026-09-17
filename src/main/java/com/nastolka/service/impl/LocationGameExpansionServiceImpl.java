@@ -63,7 +63,7 @@ public class LocationGameExpansionServiceImpl implements LocationGameExpansionSe
     public ExpansionResponse addExpansion(Long locationId, Long gameId, Long expansionId, String username) {
         User requester = accessGuard.requireUser(username);
         Location location = requireLocation(locationId);
-        accessGuard.requireManageAccess(location, requester);
+        accessGuard.requireGamesManageAccess(location, requester);
 
         LocationGame locationGame = requireLocationGame(locationId, gameId);
         GameExpansion expansion = expansionRepository.findById(expansionId)
@@ -91,7 +91,7 @@ public class LocationGameExpansionServiceImpl implements LocationGameExpansionSe
     public ExpansionResponse importExpansion(Long locationId, Long gameId, Long bggId, String username) {
         User requester = accessGuard.requireUser(username);
         Location location = requireLocation(locationId);
-        accessGuard.requireManageAccess(location, requester);
+        accessGuard.requireGamesManageAccess(location, requester);
 
         LocationGame locationGame = requireLocationGame(locationId, gameId);
         ExpansionResponse imported = gameExpansionService.getOrImportByBggId(gameId, bggId);
@@ -117,7 +117,7 @@ public class LocationGameExpansionServiceImpl implements LocationGameExpansionSe
     public void removeExpansion(Long locationId, Long gameId, Long expansionId, String username) {
         User requester = accessGuard.requireUser(username);
         Location location = requireLocation(locationId);
-        accessGuard.requireManageAccess(location, requester);
+        accessGuard.requireGamesManageAccess(location, requester);
 
         LocationGame locationGame = requireLocationGame(locationId, gameId);
         LocationGameExpansion locationGameExpansion = locationGameExpansionRepository

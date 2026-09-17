@@ -23,6 +23,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -86,6 +87,13 @@ class LocationGameServiceImplTest {
     }
 
     @Test
+    void addGame_checksGamesManageAccess_notBroadManageAccess() {
+        service.addGame(LOCATION_ID, GAME_ID, "alice");
+
+        verify(accessGuard).requireGamesManageAccess(location, user);
+    }
+
+    @Test
     void removeGame_touchesLocationUpdatedAt() {
         LocationGame locationGame = new LocationGame();
         locationGame.setLocation(location);
@@ -96,5 +104,17 @@ class LocationGameServiceImplTest {
 
         assertThat(location.getUpdatedAt()).isCloseTo(Instant.now(), within(5, ChronoUnit.SECONDS));
         assertThat(location.getUpdatedByUsername()).isEqualTo("alice");
+    }
+
+    @Test
+    void removeGame_checksGamesManageAccess_notBroadManageAccess() {
+        LocationGame locationGame = new LocationGame();
+        locationGame.setLocation(location);
+        locationGame.setGame(game);
+        when(locationGameRepository.findByLocationIdAndGameId(LOCATION_ID, GAME_ID)).thenReturn(Optional.of(locationGame));
+
+        service.removeGame(LOCATION_ID, GAME_ID, "alice");
+
+        verify(accessGuard).requireGamesManageAccess(location, user);
     }
 }

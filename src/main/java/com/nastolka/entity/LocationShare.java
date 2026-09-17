@@ -1,5 +1,6 @@
 package com.nastolka.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -29,6 +30,15 @@ public class LocationShare {
     @OnDelete(action = OnDeleteAction.CASCADE)
     private User user;
 
+    @Column(name = "can_edit_info", nullable = false)
+    private boolean canEditInfo;
+
+    @Column(name = "can_manage_games", nullable = false)
+    private boolean canManageGames;
+
+    @Column(name = "can_manage_history", nullable = false)
+    private boolean canManageHistory;
+
     public LocationShare() {
     }
 
@@ -54,5 +64,29 @@ public class LocationShare {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public boolean isCanEditInfo() {
+        return canEditInfo;
+    }
+
+    public void setCanEditInfo(boolean canEditInfo) {
+        this.canEditInfo = canEditInfo;
+    }
+
+    public boolean isCanManageGames() {
+        return canManageGames;
+    }
+
+    public void setCanManageGames(boolean canManageGames) {
+        this.canManageGames = canManageGames;
+    }
+
+    public boolean isCanManageHistory() {
+        return canManageHistory;
+    }
+
+    public void setCanManageHistory(boolean canManageHistory) {
+        this.canManageHistory = canManageHistory;
     }
 }
