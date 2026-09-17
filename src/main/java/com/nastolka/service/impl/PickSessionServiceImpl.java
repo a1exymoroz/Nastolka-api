@@ -225,6 +225,8 @@ public class PickSessionServiceImpl implements PickSessionService {
         }
         session.setCurrentTurnIndex((session.getCurrentTurnIndex() + 1) % participants.size());
 
+        autoBanRemainingIfNoChoiceLeft(session, (int) decidedCount + 1);
+
         if (session.getBanCount() >= session.getRequiredBanCount()) {
             finalizeSession(session);
         }
@@ -285,6 +287,40 @@ public class PickSessionServiceImpl implements PickSessionService {
         session.setSelectedGame(winner.getGame());
         session.setStatus(PickSessionStatus.COMPLETED);
         session.setCompletedAt(Instant.now());
+    }
+
+    /**
+     * If exactly as many undecided candidates remain as bans are still required, every one of
+     * them is mathematically guaranteed to end up banned - there is no real discretion left.
+     * Auto-resolve them as BANNED (actedBy left null to mark this as a system-driven resolution
+     * rather than a per-candidate decision by any participant) so the session completes
+     * immediately instead of forcing the remaining players through a manual ban of each one.
+     */
+    private void autoBanRemainingIfNoChoiceLeft(PickSession session, int lastActionSequence) {
+        long remainingBansNeeded = session.getRequiredBanCount() - session.getBanCount();
+        if (remainingBansNeeded <= 0) {
+            return;
+        }
+
+        List<PickSessionCandidate> undecided = candidateRepository.findBySessionId(session.getId()).stream()
+                .filter(c -> c.getAction() == PickSessionCandidateAction.UNDECIDED)
+                .toList();
+
+        if (undecided.size() != remainingBansNeeded) {
+            return;
+        }
+
+        Instant now = Instant.now();
+        int sequence = lastActionSequence;
+        for (PickSessionCandidate c : undecided) {
+            c.setAction(PickSessionCandidateAction.BANNED);
+            c.setActedBy(null);
+            c.setActedAt(now);
+            c.setActionSequence(++sequence);
+        }
+        candidateRepository.saveAll(undecided);
+
+        session.setBanCount(session.getBanCount() + undecided.size());
     }
 
     private List<Game> resolveCandidateGames(Location location, boolean excludeAlreadyPlayed) {

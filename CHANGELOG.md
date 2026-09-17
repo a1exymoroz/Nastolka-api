@@ -50,6 +50,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   now includes `updatedByUsername`, the username of whoever triggered the
   most recent change.
 
+### Fixed
+
+- Pick sessions required every remaining candidate to be individually banned
+  even after enough games had already been picked to reach the target pool
+  size — e.g. with 5 bans required and only 2 desired keepers, picking those
+  2 still left 5 separate manual bans to send one by one. Once the number of
+  still-undecided candidates equals the number of bans still required, they
+  are now auto-banned as a batch and the session completes immediately,
+  since every one of them was already guaranteed to end up banned.
+
 ## [0.11.0] - 2026-09-14
 
 ### Added
