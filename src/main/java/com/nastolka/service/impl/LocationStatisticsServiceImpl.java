@@ -17,6 +17,7 @@ import com.nastolka.entity.Location;
 import com.nastolka.entity.User;
 import com.nastolka.repository.HistoryExpansionRepository;
 import com.nastolka.repository.HistoryPlayerRepository;
+import com.nastolka.repository.HistoryVoteRepository;
 import com.nastolka.repository.LocationGameRepository;
 import com.nastolka.repository.LocationHistoryRepository;
 import com.nastolka.repository.LocationRepository;
@@ -56,6 +57,7 @@ public class LocationStatisticsServiceImpl implements LocationStatisticsService 
     private final LocationHistoryRepository locationHistoryRepository;
     private final HistoryPlayerRepository historyPlayerRepository;
     private final HistoryExpansionRepository historyExpansionRepository;
+    private final HistoryVoteRepository historyVoteRepository;
     private final LocationGameRepository locationGameRepository;
     private final LocationAccessGuard accessGuard;
 
@@ -64,6 +66,7 @@ public class LocationStatisticsServiceImpl implements LocationStatisticsService 
             LocationHistoryRepository locationHistoryRepository,
             HistoryPlayerRepository historyPlayerRepository,
             HistoryExpansionRepository historyExpansionRepository,
+            HistoryVoteRepository historyVoteRepository,
             LocationGameRepository locationGameRepository,
             LocationAccessGuard accessGuard
     ) {
@@ -71,6 +74,7 @@ public class LocationStatisticsServiceImpl implements LocationStatisticsService 
         this.locationHistoryRepository = locationHistoryRepository;
         this.historyPlayerRepository = historyPlayerRepository;
         this.historyExpansionRepository = historyExpansionRepository;
+        this.historyVoteRepository = historyVoteRepository;
         this.locationGameRepository = locationGameRepository;
         this.accessGuard = accessGuard;
     }
@@ -80,7 +84,7 @@ public class LocationStatisticsServiceImpl implements LocationStatisticsService 
         requireAccess(locationId, username);
 
         long totalFinishedSessions = locationHistoryRepository.countByLocationIdAndState(locationId, STATS_STATE);
-        Double averageRating = locationHistoryRepository.findAverageRating(locationId, STATS_STATE);
+        Double averageRating = historyVoteRepository.findAverageRating(locationId, STATS_STATE);
 
         List<Long> sessionDurationMinutes = locationHistoryRepository.findSessionTimings(locationId, STATS_STATE).stream()
                 .filter(timing -> timing.getStartedAt() != null && timing.getFinishedAt() != null)
@@ -112,7 +116,7 @@ public class LocationStatisticsServiceImpl implements LocationStatisticsService 
                         .build())
                 .toList();
 
-        List<GameRatingResponse> topRatedGames = locationHistoryRepository
+        List<GameRatingResponse> topRatedGames = historyVoteRepository
                 .findTopRatedGames(locationId, STATS_STATE, MIN_RATING_SAMPLE_SIZE, PageRequest.of(0, TOP_N_DEFAULT)).stream()
                 .map(projection -> GameRatingResponse.builder()
                         .gameId(projection.getGameId())

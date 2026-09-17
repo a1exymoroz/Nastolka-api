@@ -2,6 +2,7 @@ package com.nastolka.controller;
 
 import com.nastolka.dto.CreateHistoryRequest;
 import com.nastolka.dto.HistoryResponse;
+import com.nastolka.dto.VoteRequest;
 import com.nastolka.service.LocationHistoryService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -65,5 +66,16 @@ public class LocationHistoryController {
     ) {
         locationHistoryService.deleteHistory(locationId, historyId, username);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{historyId}/votes")
+    public ResponseEntity<HistoryResponse> voteOnHistory(
+            @PathVariable Long locationId,
+            @PathVariable Long historyId,
+            @Valid @RequestBody VoteRequest request,
+            @AuthenticationPrincipal String username
+    ) {
+        HistoryResponse history = locationHistoryService.voteOnHistory(locationId, historyId, request, username);
+        return ResponseEntity.ok(history);
     }
 }
