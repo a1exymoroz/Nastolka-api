@@ -150,10 +150,11 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
         history.setStartedAt(resolveStartedAt(null, request));
         history.setFinishedAt(resolveFinishedAt(null, request));
         history.setRating(request.getRating());
+        history.setOutcome(request.getOutcome());
         validateTimes(history);
         history = locationHistoryRepository.save(history);
 
-        savePlayers(history, request.getPlayers(), request.getState() == HistoryState.FINISHED);
+        savePlayers(history, request.getPlayers(), request.getState() == HistoryState.FINISHED && request.getOutcome() == null);
         saveExpansions(history, request.getExpansionIds());
         location.touch(requester);
         locationRepository.save(location);
@@ -182,12 +183,13 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
         history.setFinishedAt(resolveFinishedAt(history.getFinishedAt(), request));
         history.setState(request.getState());
         history.setRating(request.getRating());
+        history.setOutcome(request.getOutcome());
         validateTimes(history);
         history = locationHistoryRepository.save(history);
 
         historyPlayerRepository.deleteByHistoryId(history.getId());
         historyPlayerRepository.flush();
-        savePlayers(history, request.getPlayers(), request.getState() == HistoryState.FINISHED);
+        savePlayers(history, request.getPlayers(), request.getState() == HistoryState.FINISHED && request.getOutcome() == null);
 
         historyExpansionRepository.deleteByHistoryId(history.getId());
         historyExpansionRepository.flush();
@@ -387,6 +389,7 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
                 .rating(history.getRating())
                 .players(players)
                 .expansions(expansions)
+                .outcome(history.getOutcome())
                 .build();
     }
 

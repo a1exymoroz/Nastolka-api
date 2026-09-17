@@ -29,6 +29,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   the new username isn't already taken and returns a freshly issued JWT in
   the response, since the token's subject is the username and the old token
   stops resolving the moment the rename takes effect.
+- History log entries can now record a session-level `outcome`
+  (`WON`/`LOST`) for cooperative or solo games played against the game
+  itself (e.g. Robinson Crusoe, Arkham Horror), where there's no
+  individual score to compare. Once `outcome` is set, per-player `points`
+  are no longer required to mark the session `FINISHED`; when it's
+  omitted, the existing competitive flow (points required, placement
+  derived from points) is unchanged.
 - History log players now accept an optional free-text `meeples` field
   (e.g. which color/token a player used). It's stored and returned as-is,
   with no server-side validation of specific values — meaning is entirely

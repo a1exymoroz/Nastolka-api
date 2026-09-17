@@ -1,5 +1,6 @@
 package com.nastolka.dto;
 
+import com.nastolka.entity.HistoryOutcome;
 import com.nastolka.entity.HistoryState;
 
 import java.time.Instant;
@@ -19,6 +20,7 @@ public class HistoryResponse {
     private Integer rating;
     private List<PlayerResultResponse> players;
     private List<ExpansionResponse> expansions;
+    private HistoryOutcome outcome;
 
     public HistoryResponse() {
     }
@@ -123,6 +125,14 @@ public class HistoryResponse {
         this.expansions = expansions;
     }
 
+    public HistoryOutcome getOutcome() {
+        return outcome;
+    }
+
+    public void setOutcome(HistoryOutcome outcome) {
+        this.outcome = outcome;
+    }
+
     public static class Builder {
         private Long id;
         private Long locationId;
@@ -136,6 +146,7 @@ public class HistoryResponse {
         private Integer rating;
         private List<PlayerResultResponse> players;
         private List<ExpansionResponse> expansions;
+        private HistoryOutcome outcome;
 
         public Builder id(Long id) {
             this.id = id;
@@ -197,6 +208,11 @@ public class HistoryResponse {
             return this;
         }
 
+        public Builder outcome(HistoryOutcome outcome) {
+            this.outcome = outcome;
+            return this;
+        }
+
         public HistoryResponse build() {
             HistoryResponse response = new HistoryResponse();
             response.id = id;
@@ -211,6 +227,7 @@ public class HistoryResponse {
             response.rating = rating;
             response.players = players;
             response.expansions = expansions;
+            response.outcome = outcome;
             return response;
         }
     }
