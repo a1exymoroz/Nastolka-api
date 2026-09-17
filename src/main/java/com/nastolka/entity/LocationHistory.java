@@ -48,6 +48,9 @@ public class LocationHistory {
 
     private Integer rating;
 
+    @Enumerated(EnumType.STRING)
+    private HistoryOutcome outcome;
+
     public LocationHistory() {
     }
 
@@ -113,5 +116,13 @@ public class LocationHistory {
 
     public void setRating(Integer rating) {
         this.rating = rating;
+    }
+
+    public HistoryOutcome getOutcome() {
+        return outcome;
+    }
+
+    public void setOutcome(HistoryOutcome outcome) {
+        this.outcome = outcome;
     }
 }
