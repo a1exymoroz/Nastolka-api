@@ -11,6 +11,7 @@ import com.nastolka.entity.Location;
 import com.nastolka.entity.User;
 import com.nastolka.repository.HistoryExpansionRepository;
 import com.nastolka.repository.HistoryPlayerRepository;
+import com.nastolka.repository.HistoryVoteRepository;
 import com.nastolka.repository.LocationGameRepository;
 import com.nastolka.repository.LocationHistoryRepository;
 import com.nastolka.repository.LocationRepository;
@@ -54,6 +55,8 @@ class LocationStatisticsServiceImplTest {
     @Mock
     private HistoryExpansionRepository historyExpansionRepository;
     @Mock
+    private HistoryVoteRepository historyVoteRepository;
+    @Mock
     private LocationGameRepository locationGameRepository;
     @Mock
     private LocationAccessGuard accessGuard;
@@ -69,6 +72,7 @@ class LocationStatisticsServiceImplTest {
                 locationHistoryRepository,
                 historyPlayerRepository,
                 historyExpansionRepository,
+                historyVoteRepository,
                 locationGameRepository,
                 accessGuard
         );
@@ -82,10 +86,10 @@ class LocationStatisticsServiceImplTest {
         lenient().when(locationRepository.findById(LOCATION_ID)).thenReturn(Optional.of(location));
         lenient().when(locationHistoryRepository.findSessionTimings(LOCATION_ID, HistoryState.FINISHED)).thenReturn(List.of());
         lenient().when(locationHistoryRepository.countByLocationIdAndState(LOCATION_ID, HistoryState.FINISHED)).thenReturn(0L);
-        lenient().when(locationHistoryRepository.findAverageRating(LOCATION_ID, HistoryState.FINISHED)).thenReturn(null);
+        lenient().when(historyVoteRepository.findAverageRating(LOCATION_ID, HistoryState.FINISHED)).thenReturn(null);
         lenient().when(locationHistoryRepository.countDistinctGamesPlayed(LOCATION_ID, HistoryState.FINISHED)).thenReturn(0L);
         lenient().when(locationHistoryRepository.findMostPlayedGames(eq(LOCATION_ID), eq(HistoryState.FINISHED), any(Pageable.class))).thenReturn(List.of());
-        lenient().when(locationHistoryRepository.findTopRatedGames(eq(LOCATION_ID), eq(HistoryState.FINISHED), any(Long.class), any(Pageable.class))).thenReturn(List.of());
+        lenient().when(historyVoteRepository.findTopRatedGames(eq(LOCATION_ID), eq(HistoryState.FINISHED), any(Long.class), any(Pageable.class))).thenReturn(List.of());
         lenient().when(locationGameRepository.countByLocationId(LOCATION_ID)).thenReturn(0L);
         lenient().when(historyPlayerRepository.findPlayerStats(LOCATION_ID, HistoryState.FINISHED)).thenReturn(List.of());
         lenient().when(historyExpansionRepository.findMostUsedExpansions(eq(LOCATION_ID), eq(HistoryState.FINISHED), any(Pageable.class))).thenReturn(List.of());
@@ -141,7 +145,7 @@ class LocationStatisticsServiceImplTest {
         // 4183.333333333333 (25100 total minutes across 6 sessions) — both should
         // come back rounded to 2 decimal places instead of raw double precision.
         Instant now = Instant.now();
-        when(locationHistoryRepository.findAverageRating(LOCATION_ID, HistoryState.FINISHED)).thenReturn(3.6666666666666665);
+        when(historyVoteRepository.findAverageRating(LOCATION_ID, HistoryState.FINISHED)).thenReturn(3.6666666666666665);
         when(locationHistoryRepository.findSessionTimings(LOCATION_ID, HistoryState.FINISHED)).thenReturn(List.of(
                 sessionTiming(now, now.minus(25100, ChronoUnit.MINUTES), now),
                 sessionTiming(now, now, now),

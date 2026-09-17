@@ -2,6 +2,7 @@ package com.nastolka.service;
 
 import com.nastolka.dto.CreateHistoryRequest;
 import com.nastolka.dto.HistoryResponse;
+import com.nastolka.dto.VoteRequest;
 
 import java.util.List;
 
@@ -16,4 +17,6 @@ public interface LocationHistoryService {
     HistoryResponse updateHistory(Long locationId, Long historyId, CreateHistoryRequest request, String username);
 
     void deleteHistory(Long locationId, Long historyId, String username);
+
+    HistoryResponse voteOnHistory(Long locationId, Long historyId, VoteRequest request, String username);
 }

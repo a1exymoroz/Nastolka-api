@@ -3,10 +3,12 @@ package com.nastolka.service.impl;
 import com.nastolka.dto.CreateHistoryRequest;
 import com.nastolka.dto.HistoryResponse;
 import com.nastolka.dto.PlayerPlacementRequest;
+import com.nastolka.dto.VoteRequest;
 import com.nastolka.entity.Game;
 import com.nastolka.entity.HistoryOutcome;
 import com.nastolka.entity.HistoryPlayer;
 import com.nastolka.entity.HistoryState;
+import com.nastolka.entity.HistoryVote;
 import com.nastolka.entity.Location;
 import com.nastolka.entity.LocationHistory;
 import com.nastolka.entity.User;
@@ -15,6 +17,7 @@ import com.nastolka.repository.GameExpansionRepository;
 import com.nastolka.repository.GameRepository;
 import com.nastolka.repository.HistoryExpansionRepository;
 import com.nastolka.repository.HistoryPlayerRepository;
+import com.nastolka.repository.HistoryVoteRepository;
 import com.nastolka.repository.LocationGameExpansionRepository;
 import com.nastolka.repository.LocationGameRepository;
 import com.nastolka.repository.LocationHistoryRepository;
@@ -67,6 +70,8 @@ class LocationHistoryServiceImplTest {
     @Mock
     private HistoryExpansionRepository historyExpansionRepository;
     @Mock
+    private HistoryVoteRepository historyVoteRepository;
+    @Mock
     private LocationShareRepository locationShareRepository;
     @Mock
     private LocationAccessGuard accessGuard;
@@ -90,6 +95,7 @@ class LocationHistoryServiceImplTest {
                 expansionRepository,
                 locationGameExpansionRepository,
                 historyExpansionRepository,
+                historyVoteRepository,
                 locationShareRepository,
                 accessGuard,
                 telegramNotifier
@@ -243,5 +249,65 @@ class LocationHistoryServiceImplTest {
         service.deleteHistory(LOCATION_ID, historyId, "alice");
 
         verify(accessGuard).requireHistoryManageAccess(location, user);
+    }
+
+    @Test
+    void voteOnHistory_checksViewAccess_notHistoryManageAccess() {
+        Long historyId = 99L;
+        LocationHistory history = new LocationHistory();
+        history.setId(historyId);
+        history.setLocation(location);
+        history.setState(HistoryState.FINISHED);
+        when(locationHistoryRepository.findByIdAndLocationId(historyId, LOCATION_ID)).thenReturn(Optional.of(history));
+        when(historyVoteRepository.findByHistoryIdAndUserId(historyId, user.getId())).thenReturn(Optional.empty());
+        VoteRequest request = new VoteRequest();
+        request.setScore(8);
+
+        service.voteOnHistory(LOCATION_ID, historyId, request, "alice");
+
+        verify(accessGuard).requireViewAccess(location, user);
+    }
+
+    @Test
+    void voteOnHistory_rejectsNonFinishedSession() {
+        Long historyId = 99L;
+        LocationHistory history = new LocationHistory();
+        history.setId(historyId);
+        history.setLocation(location);
+        history.setState(HistoryState.IN_PROGRESS);
+        when(locationHistoryRepository.findByIdAndLocationId(historyId, LOCATION_ID)).thenReturn(Optional.of(history));
+        VoteRequest request = new VoteRequest();
+        request.setScore(8);
+
+        assertThatThrownBy(() -> service.voteOnHistory(LOCATION_ID, historyId, request, "alice"))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Only finished sessions can be rated");
+    }
+
+    @Test
+    void voteOnHistory_updatesExistingVote_insteadOfCreatingDuplicate() {
+        Long historyId = 99L;
+        LocationHistory history = new LocationHistory();
+        history.setId(historyId);
+        history.setLocation(location);
+        history.setState(HistoryState.FINISHED);
+        when(locationHistoryRepository.findByIdAndLocationId(historyId, LOCATION_ID)).thenReturn(Optional.of(history));
+
+        HistoryVote existingVote = new HistoryVote();
+        existingVote.setId(5L);
+        existingVote.setHistory(history);
+        existingVote.setUser(user);
+        existingVote.setScore(6);
+        when(historyVoteRepository.findByHistoryIdAndUserId(historyId, user.getId())).thenReturn(Optional.of(existingVote));
+
+        VoteRequest request = new VoteRequest();
+        request.setScore(9);
+
+        service.voteOnHistory(LOCATION_ID, historyId, request, "alice");
+
+        ArgumentCaptor<HistoryVote> voteCaptor = ArgumentCaptor.forClass(HistoryVote.class);
+        verify(historyVoteRepository).save(voteCaptor.capture());
+        assertThat(voteCaptor.getValue().getId()).isEqualTo(5L);
+        assertThat(voteCaptor.getValue().getScore()).isEqualTo(9);
     }
 }

@@ -3,13 +3,16 @@ package com.nastolka.service.impl;
 import com.nastolka.dto.CreateHistoryRequest;
 import com.nastolka.dto.ExpansionResponse;
 import com.nastolka.dto.HistoryResponse;
+import com.nastolka.dto.HistoryVoteResponse;
 import com.nastolka.dto.PlayerPlacementRequest;
 import com.nastolka.dto.PlayerResultResponse;
+import com.nastolka.dto.VoteRequest;
 import com.nastolka.entity.Game;
 import com.nastolka.entity.GameExpansion;
 import com.nastolka.entity.HistoryExpansion;
 import com.nastolka.entity.HistoryPlayer;
 import com.nastolka.entity.HistoryState;
+import com.nastolka.entity.HistoryVote;
 import com.nastolka.entity.Location;
 import com.nastolka.entity.LocationGame;
 import com.nastolka.entity.LocationHistory;
@@ -19,6 +22,7 @@ import com.nastolka.repository.GameExpansionRepository;
 import com.nastolka.repository.GameRepository;
 import com.nastolka.repository.HistoryExpansionRepository;
 import com.nastolka.repository.HistoryPlayerRepository;
+import com.nastolka.repository.HistoryVoteRepository;
 import com.nastolka.repository.LocationGameExpansionRepository;
 import com.nastolka.repository.LocationGameRepository;
 import com.nastolka.repository.LocationHistoryRepository;
@@ -56,6 +60,7 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
     private final GameExpansionRepository expansionRepository;
     private final LocationGameExpansionRepository locationGameExpansionRepository;
     private final HistoryExpansionRepository historyExpansionRepository;
+    private final HistoryVoteRepository historyVoteRepository;
     private final LocationShareRepository locationShareRepository;
     private final LocationAccessGuard accessGuard;
     private final TelegramNotifier telegramNotifier;
@@ -70,6 +75,7 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
             GameExpansionRepository expansionRepository,
             LocationGameExpansionRepository locationGameExpansionRepository,
             HistoryExpansionRepository historyExpansionRepository,
+            HistoryVoteRepository historyVoteRepository,
             LocationShareRepository locationShareRepository,
             LocationAccessGuard accessGuard,
             TelegramNotifier telegramNotifier
@@ -83,6 +89,7 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
         this.expansionRepository = expansionRepository;
         this.locationGameExpansionRepository = locationGameExpansionRepository;
         this.historyExpansionRepository = historyExpansionRepository;
+        this.historyVoteRepository = historyVoteRepository;
         this.locationShareRepository = locationShareRepository;
         this.accessGuard = accessGuard;
         this.telegramNotifier = telegramNotifier;
@@ -114,11 +121,19 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
                         LinkedHashMap::new,
                         Collectors.mapping(he -> toExpansionResponse(he.getExpansion()), Collectors.toList())));
 
+        Map<Long, List<HistoryVoteResponse>> votesByHistoryId = historyVoteRepository
+                .findByHistoryIdInOrderByCreatedAtAsc(historyIds).stream()
+                .collect(Collectors.groupingBy(
+                        historyVote -> historyVote.getHistory().getId(),
+                        LinkedHashMap::new,
+                        Collectors.mapping(this::toVoteResponse, Collectors.toList())));
+
         return historyEntries.stream()
                 .map(history -> toResponse(
                         history,
                         playersByHistoryId.getOrDefault(history.getId(), List.of()),
-                        expansionsByHistoryId.getOrDefault(history.getId(), List.of())))
+                        expansionsByHistoryId.getOrDefault(history.getId(), List.of()),
+                        votesByHistoryId.getOrDefault(history.getId(), List.of())))
                 .toList();
     }
 
@@ -215,6 +230,28 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
         locationHistoryRepository.delete(history);
         location.touch(requester);
         locationRepository.save(location);
+    }
+
+    @Override
+    @Transactional
+    public HistoryResponse voteOnHistory(Long locationId, Long historyId, VoteRequest request, String username) {
+        User requester = accessGuard.requireUser(username);
+        Location location = requireLocation(locationId);
+        accessGuard.requireViewAccess(location, requester);
+
+        LocationHistory history = requireHistory(locationId, historyId);
+        if (history.getState() != HistoryState.FINISHED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only finished sessions can be rated");
+        }
+
+        HistoryVote vote = historyVoteRepository.findByHistoryIdAndUserId(historyId, requester.getId())
+                .orElseGet(HistoryVote::new);
+        vote.setHistory(history);
+        vote.setUser(requester);
+        vote.setScore(request.getScore());
+        historyVoteRepository.save(vote);
+
+        return toResponse(history);
     }
 
     private void savePlayers(LocationHistory history, List<PlayerPlacementRequest> playerRequests, boolean requireRanking) {
@@ -368,13 +405,21 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
                 .map(this::toExpansionResponse)
                 .toList();
 
-        return toResponse(history, players, expansions);
+        List<HistoryVoteResponse> votes = historyVoteRepository.findByHistoryIdOrderByCreatedAtAsc(history.getId()).stream()
+                .map(this::toVoteResponse)
+                .toList();
+
+        return toResponse(history, players, expansions, votes);
     }
 
-    private HistoryResponse toResponse(LocationHistory history, List<PlayerResultResponse> players, List<ExpansionResponse> expansions) {
+    private HistoryResponse toResponse(LocationHistory history, List<PlayerResultResponse> players,
+            List<ExpansionResponse> expansions, List<HistoryVoteResponse> votes) {
         Long durationMinutes = (history.getStartedAt() != null && history.getFinishedAt() != null)
                 ? Duration.between(history.getStartedAt(), history.getFinishedAt()).toMinutes()
                 : null;
+
+        Double averageRating = votes.isEmpty() ? null
+                : votes.stream().mapToInt(HistoryVoteResponse::getScore).average().orElseThrow();
 
         return HistoryResponse.builder()
                 .id(history.getId())
@@ -390,6 +435,9 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
                 .players(players)
                 .expansions(expansions)
                 .outcome(history.getOutcome())
+                .votes(votes)
+                .averageRating(averageRating)
+                .voteCount((long) votes.size())
                 .build();
     }
 
@@ -399,6 +447,14 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
                 .placement(historyPlayer.getPlacement())
                 .points(historyPlayer.getPoints())
                 .meeples(historyPlayer.getMeeples())
+                .build();
+    }
+
+    private HistoryVoteResponse toVoteResponse(HistoryVote vote) {
+        return HistoryVoteResponse.builder()
+                .username(vote.getUser().getUsername())
+                .score(vote.getScore())
+                .votedAt(vote.getUpdatedAt())
                 .build();
     }
 

@@ -13,6 +13,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Any user with at least view access to a location (owner, admin, or any
+  shared user, regardless of edit permissions) can now rate a finished
+  history entry via `POST /api/locations/{locationId}/history/{historyId}/votes`
+  (score 1-10, upsert on re-vote). `GET history` responses now include the
+  per-user `votes` list alongside a computed `averageRating`/`voteCount` for
+  each entry. The location-wide and per-game average-rating statistics
+  (`GET .../statistics/overview` and `.../statistics/games`) now aggregate
+  from these per-user votes instead of the single editor-set `rating` field,
+  which remains unchanged as a separate, optional "official" rating still
+  settable via `POST`/`PUT history`.
 - Location owners can now grant shared users granular edit permissions —
   editing the location's own info, managing its games/expansions, and
   managing its history log entries — independently of each other, via new

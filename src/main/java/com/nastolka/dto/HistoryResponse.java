@@ -21,6 +21,9 @@ public class HistoryResponse {
     private List<PlayerResultResponse> players;
     private List<ExpansionResponse> expansions;
     private HistoryOutcome outcome;
+    private List<HistoryVoteResponse> votes;
+    private Double averageRating;
+    private Long voteCount;
 
     public HistoryResponse() {
     }
@@ -133,6 +136,30 @@ public class HistoryResponse {
         this.outcome = outcome;
     }
 
+    public List<HistoryVoteResponse> getVotes() {
+        return votes;
+    }
+
+    public void setVotes(List<HistoryVoteResponse> votes) {
+        this.votes = votes;
+    }
+
+    public Double getAverageRating() {
+        return averageRating;
+    }
+
+    public void setAverageRating(Double averageRating) {
+        this.averageRating = averageRating;
+    }
+
+    public Long getVoteCount() {
+        return voteCount;
+    }
+
+    public void setVoteCount(Long voteCount) {
+        this.voteCount = voteCount;
+    }
+
     public static class Builder {
         private Long id;
         private Long locationId;
@@ -147,6 +174,9 @@ public class HistoryResponse {
         private List<PlayerResultResponse> players;
         private List<ExpansionResponse> expansions;
         private HistoryOutcome outcome;
+        private List<HistoryVoteResponse> votes;
+        private Double averageRating;
+        private Long voteCount;
 
         public Builder id(Long id) {
             this.id = id;
@@ -213,6 +243,21 @@ public class HistoryResponse {
             return this;
         }
 
+        public Builder votes(List<HistoryVoteResponse> votes) {
+            this.votes = votes;
+            return this;
+        }
+
+        public Builder averageRating(Double averageRating) {
+            this.averageRating = averageRating;
+            return this;
+        }
+
+        public Builder voteCount(Long voteCount) {
+            this.voteCount = voteCount;
+            return this;
+        }
+
         public HistoryResponse build() {
             HistoryResponse response = new HistoryResponse();
             response.id = id;
@@ -228,6 +273,9 @@ public class HistoryResponse {
             response.players = players;
             response.expansions = expansions;
             response.outcome = outcome;
+            response.votes = votes;
+            response.averageRating = averageRating;
+            response.voteCount = voteCount;
             return response;
         }
     }
