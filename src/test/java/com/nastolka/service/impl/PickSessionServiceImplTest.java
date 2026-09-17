@@ -328,6 +328,75 @@ class PickSessionServiceImplTest {
     }
 
     @Test
+    void submitAction_autoBansRemainingCandidates_whenPickReachesTarget() {
+        PickSession session = newSession(PickSessionStatus.IN_PROGRESS, 1, false);
+        session.setRequiredBanCount(2);
+        session.setBanCount(1);
+        session.setCurrentTurnIndex(0);
+        Game g1 = game(1L);
+        Game g2 = game(2L);
+        Game g3 = game(3L);
+        // Same candidate instances are returned by both lookups (see comment on the ban-completion
+        // test above) so mutating c2 via the pick is visible to the findBySessionId read that the
+        // new auto-ban helper performs afterward.
+        PickSessionCandidate c1 = candidate(session, g1, PickSessionCandidateAction.BANNED);
+        PickSessionCandidate c2 = candidate(session, g2, PickSessionCandidateAction.UNDECIDED);
+        PickSessionCandidate c3 = candidate(session, g3, PickSessionCandidateAction.UNDECIDED);
+        when(pickSessionRepository.findByIdAndLocationIdForUpdate(SESSION_ID, LOCATION_ID)).thenReturn(Optional.of(session));
+        when(participantRepository.findBySessionIdOrderByTurnOrderAsc(SESSION_ID))
+                .thenReturn(List.of(participant(session, creator, 0)));
+        when(candidateRepository.findBySessionIdAndGameId(SESSION_ID, 2L)).thenReturn(Optional.of(c2));
+        when(candidateRepository.findBySessionId(SESSION_ID)).thenReturn(List.of(c1, c2, c3));
+
+        PickSessionActionRequest request = new PickSessionActionRequest();
+        request.setGameId(2L);
+        request.setAction(PickSessionCandidateAction.PICKED);
+
+        PickSessionResponse response = service.submitAction(LOCATION_ID, SESSION_ID, request, "alice");
+
+        assertThat(response.getBanCount()).isEqualTo(2);
+        assertThat(response.getStatus()).isEqualTo(PickSessionStatus.COMPLETED);
+        assertThat(response.getSelectedGameId()).isEqualTo(2L);
+        assertThat(c3.getAction()).isEqualTo(PickSessionCandidateAction.BANNED);
+        assertThat(c3.getActedBy()).isNull();
+
+        ArgumentCaptor<List<PickSessionCandidate>> captor = ArgumentCaptor.forClass(List.class);
+        org.mockito.Mockito.verify(candidateRepository).saveAll(captor.capture());
+        assertThat(captor.getValue()).containsExactly(c3);
+    }
+
+    @Test
+    void submitAction_doesNotAutoBan_whenMoreUndecidedThanBansNeeded() {
+        PickSession session = newSession(PickSessionStatus.IN_PROGRESS, 1, false);
+        session.setRequiredBanCount(2);
+        session.setBanCount(0);
+        session.setCurrentTurnIndex(0);
+        Game g1 = game(1L);
+        Game g2 = game(2L);
+        Game g3 = game(3L);
+        Game g4 = game(4L);
+        PickSessionCandidate c1 = candidate(session, g1, PickSessionCandidateAction.UNDECIDED);
+        PickSessionCandidate c2 = candidate(session, g2, PickSessionCandidateAction.UNDECIDED);
+        PickSessionCandidate c3 = candidate(session, g3, PickSessionCandidateAction.UNDECIDED);
+        PickSessionCandidate c4 = candidate(session, g4, PickSessionCandidateAction.UNDECIDED);
+        when(pickSessionRepository.findByIdAndLocationIdForUpdate(SESSION_ID, LOCATION_ID)).thenReturn(Optional.of(session));
+        when(participantRepository.findBySessionIdOrderByTurnOrderAsc(SESSION_ID))
+                .thenReturn(List.of(participant(session, creator, 0)));
+        when(candidateRepository.findBySessionIdAndGameId(SESSION_ID, 1L)).thenReturn(Optional.of(c1));
+        when(candidateRepository.findBySessionId(SESSION_ID)).thenReturn(List.of(c1, c2, c3, c4));
+
+        PickSessionActionRequest request = new PickSessionActionRequest();
+        request.setGameId(1L);
+        request.setAction(PickSessionCandidateAction.BANNED);
+
+        PickSessionResponse response = service.submitAction(LOCATION_ID, SESSION_ID, request, "alice");
+
+        assertThat(response.getBanCount()).isEqualTo(1);
+        assertThat(response.getStatus()).isEqualTo(PickSessionStatus.IN_PROGRESS);
+        org.mockito.Mockito.verify(candidateRepository, org.mockito.Mockito.never()).saveAll(anyList());
+    }
+
+    @Test
     void cancel_allowsCreator() {
         PickSession session = newSession(PickSessionStatus.WAITING_FOR_PLAYERS, 1, false);
         when(pickSessionRepository.findByIdAndLocationIdForUpdate(SESSION_ID, LOCATION_ID)).thenReturn(Optional.of(session));
