@@ -93,7 +93,7 @@ public class LocationServiceImpl implements LocationService {
     public LocationResponse updateLocation(Long id, CreateLocationRequest request, String username) {
         User requester = accessGuard.requireUser(username);
         Location location = requireLocation(id);
-        accessGuard.requireManageAccess(location, requester);
+        accessGuard.requireInfoEditAccess(location, requester);
 
         requireTelegramChatIdAvailable(id, request.getTelegramChatId());
 

@@ -2,6 +2,7 @@ package com.nastolka.service.impl;
 
 import com.nastolka.dto.LocationShareResponse;
 import com.nastolka.dto.ShareLocationRequest;
+import com.nastolka.dto.UpdateSharePermissionsRequest;
 import com.nastolka.entity.Location;
 import com.nastolka.entity.LocationShare;
 import com.nastolka.entity.User;
@@ -42,7 +43,6 @@ public class LocationShareServiceImpl implements LocationShareService {
         accessGuard.requireManageAccess(location, requester);
 
         return locationShareRepository.findByLocationId(locationId).stream()
-                .map(LocationShare::getUser)
                 .map(this::toResponse)
                 .toList();
     }
@@ -67,9 +67,32 @@ public class LocationShareServiceImpl implements LocationShareService {
         LocationShare share = new LocationShare();
         share.setLocation(location);
         share.setUser(target);
-        locationShareRepository.save(share);
+        share.setCanEditInfo(request.isCanEditInfo());
+        share.setCanManageGames(request.isCanManageGames());
+        share.setCanManageHistory(request.isCanManageHistory());
+        share = locationShareRepository.save(share);
 
-        return toResponse(target);
+        return toResponse(share);
+    }
+
+    @Override
+    public LocationShareResponse updateSharePermissions(Long locationId, String targetUsername, UpdateSharePermissionsRequest request, String username) {
+        User requester = accessGuard.requireUser(username);
+        Location location = requireLocation(locationId);
+        accessGuard.requireManageAccess(location, requester);
+
+        User target = userRepository.findByUsername(targetUsername)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        LocationShare share = locationShareRepository.findByLocationIdAndUserId(locationId, target.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Location is not shared with this user"));
+
+        share.setCanEditInfo(request.isCanEditInfo());
+        share.setCanManageGames(request.isCanManageGames());
+        share.setCanManageHistory(request.isCanManageHistory());
+        share = locationShareRepository.save(share);
+
+        return toResponse(share);
     }
 
     @Override
@@ -91,10 +114,14 @@ public class LocationShareServiceImpl implements LocationShareService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Location not found"));
     }
 
-    private LocationShareResponse toResponse(User user) {
+    private LocationShareResponse toResponse(LocationShare share) {
+        User user = share.getUser();
         return LocationShareResponse.builder()
                 .username(user.getUsername())
                 .email(user.getEmail())
+                .canEditInfo(share.isCanEditInfo())
+                .canManageGames(share.isCanManageGames())
+                .canManageHistory(share.isCanManageHistory())
                 .build();
     }
 }

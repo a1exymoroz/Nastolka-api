@@ -24,6 +24,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -94,6 +95,13 @@ class LocationGameExpansionServiceImplTest {
     }
 
     @Test
+    void addExpansion_checksGamesManageAccess_notBroadManageAccess() {
+        service.addExpansion(LOCATION_ID, GAME_ID, EXPANSION_ID, "alice");
+
+        verify(accessGuard).requireGamesManageAccess(location, user);
+    }
+
+    @Test
     void removeExpansion_touchesLocationUpdatedAt() {
         LocationGameExpansion locationGameExpansion = new LocationGameExpansion();
         locationGameExpansion.setLocationGame(locationGame);
@@ -105,5 +113,18 @@ class LocationGameExpansionServiceImplTest {
 
         assertThat(location.getUpdatedAt()).isCloseTo(Instant.now(), within(5, ChronoUnit.SECONDS));
         assertThat(location.getUpdatedByUsername()).isEqualTo("alice");
+    }
+
+    @Test
+    void removeExpansion_checksGamesManageAccess_notBroadManageAccess() {
+        LocationGameExpansion locationGameExpansion = new LocationGameExpansion();
+        locationGameExpansion.setLocationGame(locationGame);
+        locationGameExpansion.setExpansion(expansion);
+        when(locationGameExpansionRepository.findByLocationGameIdAndExpansionId(locationGame.getId(), EXPANSION_ID))
+                .thenReturn(Optional.of(locationGameExpansion));
+
+        service.removeExpansion(LOCATION_ID, GAME_ID, EXPANSION_ID, "alice");
+
+        verify(accessGuard).requireGamesManageAccess(location, user);
     }
 }

@@ -91,7 +91,7 @@ public class LocationGameServiceImpl implements LocationGameService {
     public GameResponse addGame(Long locationId, Long gameId, String username) {
         User requester = accessGuard.requireUser(username);
         Location location = requireLocation(locationId);
-        accessGuard.requireManageAccess(location, requester);
+        accessGuard.requireGamesManageAccess(location, requester);
 
         Game game = gameRepository.findById(gameId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Game not found"));
@@ -114,7 +114,7 @@ public class LocationGameServiceImpl implements LocationGameService {
     public GameResponse importGame(Long locationId, Long bggId, String username) {
         User requester = accessGuard.requireUser(username);
         Location location = requireLocation(locationId);
-        accessGuard.requireManageAccess(location, requester);
+        accessGuard.requireGamesManageAccess(location, requester);
 
         GameResponse imported = gameService.getOrImportByBggId(bggId);
 
@@ -139,7 +139,7 @@ public class LocationGameServiceImpl implements LocationGameService {
     public void removeGame(Long locationId, Long gameId, String username) {
         User requester = accessGuard.requireUser(username);
         Location location = requireLocation(locationId);
-        accessGuard.requireManageAccess(location, requester);
+        accessGuard.requireGamesManageAccess(location, requester);
 
         LocationGame locationGame = locationGameRepository.findByLocationIdAndGameId(locationId, gameId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Game not found in this location"));

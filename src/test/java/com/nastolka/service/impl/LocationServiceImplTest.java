@@ -23,6 +23,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -134,5 +135,18 @@ class LocationServiceImplTest {
         LocationResponse response = service.updateLocation(1L, request, "alice");
 
         assertThat(response.getUpdatedByUsername()).isEqualTo("alice");
+    }
+
+    @Test
+    void updateLocation_checksInfoEditAccess_notBroadManageAccess() {
+        Location location = locationUpdatedAt(1L, Instant.now().minus(1, ChronoUnit.DAYS));
+        when(locationRepository.findById(1L)).thenReturn(Optional.of(location));
+        when(locationRepository.save(any(Location.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        CreateLocationRequest request = new CreateLocationRequest();
+        request.setName("Renamed");
+
+        service.updateLocation(1L, request, "alice");
+
+        verify(accessGuard).requireInfoEditAccess(location, requester);
     }
 }

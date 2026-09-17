@@ -138,7 +138,7 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
     public HistoryResponse addHistory(Long locationId, CreateHistoryRequest request, String username) {
         User requester = accessGuard.requireUser(username);
         Location location = requireLocation(locationId);
-        accessGuard.requireManageAccess(location, requester);
+        accessGuard.requireHistoryManageAccess(location, requester);
 
         Game game = resolveLocationGame(locationId, request.getGameId());
 
@@ -171,7 +171,7 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
     public HistoryResponse updateHistory(Long locationId, Long historyId, CreateHistoryRequest request, String username) {
         User requester = accessGuard.requireUser(username);
         Location location = requireLocation(locationId);
-        accessGuard.requireManageAccess(location, requester);
+        accessGuard.requireHistoryManageAccess(location, requester);
 
         LocationHistory history = requireHistory(locationId, historyId);
         HistoryState previousState = history.getState();
@@ -209,7 +209,7 @@ public class LocationHistoryServiceImpl implements LocationHistoryService {
     public void deleteHistory(Long locationId, Long historyId, String username) {
         User requester = accessGuard.requireUser(username);
         Location location = requireLocation(locationId);
-        accessGuard.requireManageAccess(location, requester);
+        accessGuard.requireHistoryManageAccess(location, requester);
 
         LocationHistory history = requireHistory(locationId, historyId);
         locationHistoryRepository.delete(history);
