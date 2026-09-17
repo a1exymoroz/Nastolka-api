@@ -13,6 +13,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Real-time cooperative game-picking sessions per location, under
+  `/api/locations/{locationId}/pick-sessions` (REST for create/state-fetch)
+  and STOMP destinations under `/app/locations/{locationId}/pick-sessions/{sessionId}`
+  (join/start/action/cancel, broadcast to the matching `/topic/...` destination).
+  A location member starts a session specifying how many games should survive
+  to the final dice roll and whether to exclude games already marked finished
+  in the location's history; other members join, then take turns picking
+  (protecting) or banning games from the location's catalog in a randomized
+  turn order until the target pool size is reached, at which point the server
+  randomly selects the game to play. Every participant, turn, and pick/ban
+  decision is persisted for future statistics.
 - Users can now change their own username via `PUT /api/users/me` (new
   `GET /api/users/me` returns the current username/email). Renaming checks
   the new username isn't already taken and returns a freshly issued JWT in
