@@ -28,8 +28,8 @@ import java.util.regex.Pattern;
 public class StompAuthChannelInterceptor implements ChannelInterceptor {
 
     private static final String BEARER_PREFIX = "Bearer ";
-    private static final Pattern LOCATION_DESTINATION_PATTERN =
-            Pattern.compile("/(?:app|topic)/locations/(\\d+)/chat(?:\\.send)?");
+    private static final Pattern LOCATION_DESTINATION_PATTERN = Pattern.compile(
+            "/(?:app|topic)/locations/(\\d+)/(?:chat(?:\\.send)?|pick-sessions/\\d+(?:/(?:join|start|action|cancel))?)");
 
     private final JwtUtil jwtUtil;
     private final UserService userService;
@@ -106,7 +106,7 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
         try {
             accessGuard.requireViewAccess(location, requester);
         } catch (ResponseStatusException e) {
-            throw new MessagingException("You do not have access to this location's chat", e);
+            throw new MessagingException("You do not have access to this location", e);
         }
     }
 

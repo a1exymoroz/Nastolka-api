@@ -45,4 +45,7 @@ public interface LocationHistoryRepository extends JpaRepository<LocationHistory
             "group by h.game.id, h.game.name having count(h) >= :minSamples order by avg(h.rating) desc")
     List<GameRatingProjection> findTopRatedGames(@Param("locationId") Long locationId, @Param("state") HistoryState state,
                                                   @Param("minSamples") long minSamples, Pageable pageable);
+
+    @Query("select distinct h.game.id from LocationHistory h where h.location.id = :locationId and h.state = :state")
+    List<Long> findDistinctGameIdsByLocationIdAndState(@Param("locationId") Long locationId, @Param("state") HistoryState state);
 }
