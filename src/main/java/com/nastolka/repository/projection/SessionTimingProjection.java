@@ -9,4 +9,8 @@ public interface SessionTimingProjection {
     Instant getFinishedAt();
 
     Instant getPlayedAt();
+
+    Long getGameId();
+
+    String getGameName();
 }

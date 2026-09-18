@@ -96,10 +96,16 @@ class LocationStatisticsServiceImplTest {
     }
 
     private SessionTimingProjection sessionTiming(Instant playedAt, Instant startedAt, Instant finishedAt) {
+        return sessionTiming(playedAt, startedAt, finishedAt, null, null);
+    }
+
+    private SessionTimingProjection sessionTiming(Instant playedAt, Instant startedAt, Instant finishedAt, Long gameId, String gameName) {
         SessionTimingProjection timing = mock(SessionTimingProjection.class);
         lenient().when(timing.getPlayedAt()).thenReturn(playedAt);
         lenient().when(timing.getStartedAt()).thenReturn(startedAt);
         lenient().when(timing.getFinishedAt()).thenReturn(finishedAt);
+        lenient().when(timing.getGameId()).thenReturn(gameId);
+        lenient().when(timing.getGameName()).thenReturn(gameName);
         return timing;
     }
 
@@ -277,14 +283,15 @@ class LocationStatisticsServiceImplTest {
         Instant recent = Instant.now().minus(10, ChronoUnit.DAYS);
         Instant tooOld = Instant.now().minus(400, ChronoUnit.DAYS);
         when(locationHistoryRepository.findSessionTimings(LOCATION_ID, HistoryState.FINISHED)).thenReturn(List.of(
-                sessionTiming(recent, null, null),
-                sessionTiming(tooOld, null, null)
+                sessionTiming(recent, null, null, 1L, "Catan"),
+                sessionTiming(tooOld, null, null, 2L, "Terraforming Mars")
         ));
 
         List<DailyActivityResponse> calendar = service.getContributionCalendar(LOCATION_ID, "alice");
 
         assertThat(calendar).hasSize(1);
         assertThat(calendar.get(0).getSessionCount()).isEqualTo(1L);
+        assertThat(calendar.get(0).getGames()).extracting("name").containsExactly("Catan");
     }
 
     @Test
@@ -297,13 +304,45 @@ class LocationStatisticsServiceImplTest {
         Instant localMidnight = todayInWarsaw.atStartOfDay(warsaw).toInstant();
 
         when(locationHistoryRepository.findSessionTimings(LOCATION_ID, HistoryState.FINISHED)).thenReturn(List.of(
-                sessionTiming(localMidnight, null, null)
+                sessionTiming(localMidnight, null, null, 1L, "Catan")
         ));
 
         List<DailyActivityResponse> calendar = service.getContributionCalendar(LOCATION_ID, "alice");
 
         assertThat(calendar).hasSize(1);
         assertThat(calendar.get(0).getDate()).isEqualTo(todayInWarsaw);
+        assertThat(calendar.get(0).getGames()).extracting("name").containsExactly("Catan");
+    }
+
+    @Test
+    void getContributionCalendar_dedupesRepeatSessionsOfSameGameOnSameDay() {
+        Instant morning = Instant.now().minus(5, ChronoUnit.HOURS);
+        Instant evening = Instant.now();
+        when(locationHistoryRepository.findSessionTimings(LOCATION_ID, HistoryState.FINISHED)).thenReturn(List.of(
+                sessionTiming(morning, null, null, 1L, "Catan"),
+                sessionTiming(evening, null, null, 1L, "Catan")
+        ));
+
+        List<DailyActivityResponse> calendar = service.getContributionCalendar(LOCATION_ID, "alice");
+
+        assertThat(calendar).hasSize(1);
+        assertThat(calendar.get(0).getSessionCount()).isEqualTo(2L);
+        assertThat(calendar.get(0).getGames()).extracting("name").containsExactly("Catan");
+    }
+
+    @Test
+    void getContributionCalendar_listsMultipleDistinctGamesPlayedOnSameDay() {
+        Instant morning = Instant.now().minus(5, ChronoUnit.HOURS);
+        Instant evening = Instant.now();
+        when(locationHistoryRepository.findSessionTimings(LOCATION_ID, HistoryState.FINISHED)).thenReturn(List.of(
+                sessionTiming(morning, null, null, 2L, "Terraforming Mars"),
+                sessionTiming(evening, null, null, 1L, "Catan")
+        ));
+
+        List<DailyActivityResponse> calendar = service.getContributionCalendar(LOCATION_ID, "alice");
+
+        assertThat(calendar).hasSize(1);
+        assertThat(calendar.get(0).getGames()).extracting("name").containsExactly("Catan", "Terraforming Mars");
     }
 
     @Test

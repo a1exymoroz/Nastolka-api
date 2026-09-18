@@ -31,7 +31,8 @@ public interface LocationHistoryRepository extends JpaRepository<LocationHistory
             "where h.location.id = :locationId and h.state = :state")
     long countDistinctGamesPlayed(@Param("locationId") Long locationId, @Param("state") HistoryState state);
 
-    @Query("select h.startedAt as startedAt, h.finishedAt as finishedAt, h.playedAt as playedAt from LocationHistory h " +
+    @Query("select h.startedAt as startedAt, h.finishedAt as finishedAt, h.playedAt as playedAt, " +
+            "h.game.id as gameId, h.game.name as gameName from LocationHistory h " +
             "where h.location.id = :locationId and h.state = :state")
     List<SessionTimingProjection> findSessionTimings(@Param("locationId") Long locationId, @Param("state") HistoryState state);
 
