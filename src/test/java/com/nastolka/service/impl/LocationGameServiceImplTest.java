@@ -1,5 +1,6 @@
 package com.nastolka.service.impl;
 
+import com.nastolka.dto.GameResponse;
 import com.nastolka.entity.Game;
 import com.nastolka.entity.Location;
 import com.nastolka.entity.LocationGame;
@@ -15,12 +16,15 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
@@ -116,5 +120,55 @@ class LocationGameServiceImplTest {
         service.removeGame(LOCATION_ID, GAME_ID, "alice");
 
         verify(accessGuard).requireGamesManageAccess(location, user);
+    }
+
+    @Test
+    void addGame_throwsConflict_whenGameIdAlreadyAttached() {
+        when(locationGameRepository.existsByLocationIdAndGameId(LOCATION_ID, GAME_ID)).thenReturn(true);
+
+        assertThatThrownBy(() -> service.addGame(LOCATION_ID, GAME_ID, "alice"))
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(ex -> assertThat(((ResponseStatusException) ex).getStatusCode()).isEqualTo(HttpStatus.CONFLICT));
+    }
+
+    @Test
+    void addGame_throwsConflict_whenDifferentGameSameNameCaseInsensitive() {
+        Long otherGameId = 3L;
+        Game otherGame = new Game();
+        otherGame.setId(otherGameId);
+        otherGame.setName("CATAN");
+        when(gameRepository.findById(otherGameId)).thenReturn(Optional.of(otherGame));
+        when(locationGameRepository.existsByLocationIdAndGameId(LOCATION_ID, otherGameId)).thenReturn(false);
+        when(locationGameRepository.existsByLocationIdAndGame_NameIgnoreCase(LOCATION_ID, "CATAN")).thenReturn(true);
+
+        assertThatThrownBy(() -> service.addGame(LOCATION_ID, otherGameId, "alice"))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("CATAN")
+                .satisfies(ex -> assertThat(((ResponseStatusException) ex).getStatusCode()).isEqualTo(HttpStatus.CONFLICT));
+    }
+
+    @Test
+    void importGame_throwsConflict_whenGameIdAlreadyAttached() {
+        GameResponse imported = GameResponse.builder().id(GAME_ID).name("Terraforming Mars").build();
+        when(gameService.getOrImportByBggId(555L)).thenReturn(imported);
+        when(locationGameRepository.existsByLocationIdAndGameId(LOCATION_ID, GAME_ID)).thenReturn(true);
+
+        assertThatThrownBy(() -> service.importGame(LOCATION_ID, 555L, "alice"))
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(ex -> assertThat(((ResponseStatusException) ex).getStatusCode()).isEqualTo(HttpStatus.CONFLICT));
+    }
+
+    @Test
+    void importGame_throwsConflict_whenDifferentGameSameNameCaseInsensitive() {
+        Long importedGameId = 3L;
+        GameResponse imported = GameResponse.builder().id(importedGameId).name("Catan").build();
+        when(gameService.getOrImportByBggId(555L)).thenReturn(imported);
+        when(locationGameRepository.existsByLocationIdAndGameId(LOCATION_ID, importedGameId)).thenReturn(false);
+        when(locationGameRepository.existsByLocationIdAndGame_NameIgnoreCase(LOCATION_ID, "Catan")).thenReturn(true);
+
+        assertThatThrownBy(() -> service.importGame(LOCATION_ID, 555L, "alice"))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Catan")
+                .satisfies(ex -> assertThat(((ResponseStatusException) ex).getStatusCode()).isEqualTo(HttpStatus.CONFLICT));
     }
 }

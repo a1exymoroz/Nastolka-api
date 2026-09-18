@@ -99,6 +99,10 @@ public class LocationGameServiceImpl implements LocationGameService {
         if (locationGameRepository.existsByLocationIdAndGameId(locationId, gameId)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Game already added to this location");
         }
+        if (locationGameRepository.existsByLocationIdAndGame_NameIgnoreCase(locationId, game.getName())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "A game named \"%s\" is already added to this location".formatted(game.getName()));
+        }
 
         LocationGame locationGame = new LocationGame();
         locationGame.setLocation(location);
@@ -120,6 +124,10 @@ public class LocationGameServiceImpl implements LocationGameService {
 
         if (locationGameRepository.existsByLocationIdAndGameId(locationId, imported.getId())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Game already added to this location");
+        }
+        if (locationGameRepository.existsByLocationIdAndGame_NameIgnoreCase(locationId, imported.getName())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "A game named \"%s\" is already added to this location".formatted(imported.getName()));
         }
 
         Game game = gameRepository.findById(imported.getId())

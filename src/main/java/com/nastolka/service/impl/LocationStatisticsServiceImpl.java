@@ -3,6 +3,7 @@ package com.nastolka.service.impl;
 import com.nastolka.dto.ActivityBucketResponse;
 import com.nastolka.dto.ActivityGranularity;
 import com.nastolka.dto.ActivityStatistics;
+import com.nastolka.dto.DailyActivityGameResponse;
 import com.nastolka.dto.DailyActivityResponse;
 import com.nastolka.dto.ExpansionUsageResponse;
 import com.nastolka.dto.GamePlayCountResponse;
@@ -35,6 +36,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.temporal.TemporalAdjusters;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -214,15 +216,38 @@ public class LocationStatisticsServiceImpl implements LocationStatisticsService 
 
         LocalDate cutoff = LocalDate.now(LOCATION_ZONE).minusDays(CONTRIBUTION_CALENDAR_DAYS - 1L);
 
-        Map<LocalDate, Long> dailyCounts = locationHistoryRepository.findSessionTimings(locationId, STATS_STATE).stream()
-                .map(timing -> timing.getPlayedAt().atZone(LOCATION_ZONE).toLocalDate())
-                .filter(date -> !date.isBefore(cutoff))
-                .collect(Collectors.groupingBy(date -> date, TreeMap::new, Collectors.counting()));
+        List<SessionTimingProjection> timings = locationHistoryRepository.findSessionTimings(locationId, STATS_STATE).stream()
+                .filter(timing -> !timing.getPlayedAt().atZone(LOCATION_ZONE).toLocalDate().isBefore(cutoff))
+                .toList();
+
+        Map<LocalDate, Long> dailyCounts = timings.stream()
+                .collect(Collectors.groupingBy(
+                        timing -> timing.getPlayedAt().atZone(LOCATION_ZONE).toLocalDate(),
+                        TreeMap::new,
+                        Collectors.counting()));
+
+        Map<LocalDate, List<DailyActivityGameResponse>> dailyGames = timings.stream()
+                .collect(Collectors.groupingBy(
+                        timing -> timing.getPlayedAt().atZone(LOCATION_ZONE).toLocalDate(),
+                        TreeMap::new,
+                        Collectors.collectingAndThen(
+                                Collectors.toMap(
+                                        SessionTimingProjection::getGameId,
+                                        timing -> DailyActivityGameResponse.builder()
+                                                .id(timing.getGameId())
+                                                .name(timing.getGameName())
+                                                .build(),
+                                        (a, b) -> a,
+                                        LinkedHashMap::new),
+                                gamesById -> gamesById.values().stream()
+                                        .sorted(Comparator.comparing(DailyActivityGameResponse::getName))
+                                        .toList())));
 
         return dailyCounts.entrySet().stream()
                 .map(entry -> DailyActivityResponse.builder()
                         .date(entry.getKey())
                         .sessionCount(entry.getValue())
+                        .games(dailyGames.getOrDefault(entry.getKey(), List.of()))
                         .build())
                 .toList();
     }

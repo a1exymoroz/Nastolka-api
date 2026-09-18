@@ -68,6 +68,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   recently active locations sort to the top too. The location response also
   now includes `updatedByUsername`, the username of whoever triggered the
   most recent change.
+- `GET .../statistics/contribution-calendar` entries now include a `games`
+  list (`{ id, name }`, deduplicated and sorted by name) of every distinct
+  game played on that day, alongside the existing `date`/`sessionCount`.
+- Adding a game to a location (`POST .../games/{gameId}` or
+  `.../games/import/{bggId}`) now also rejects a game whose name matches
+  (case-insensitively) a game already attached to that location, even if
+  it's a different catalog `Game` row (e.g. one manually created, one
+  imported from BoardGameGeek) — closing a gap where the existing
+  same-`gameId` duplicate check didn't catch this case.
 
 ### Fixed
 
