@@ -2,9 +2,7 @@ package com.nastolka.service.impl;
 
 import com.nastolka.dto.GameResponse;
 import com.nastolka.entity.Game;
-import com.nastolka.entity.GameExpansion;
 import com.nastolka.integration.bgg.BggClient;
-import com.nastolka.repository.GameExpansionRepository;
 import com.nastolka.repository.GameRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,15 +26,13 @@ class GameServiceImplTest {
     @Mock
     private GameRepository gameRepository;
     @Mock
-    private GameExpansionRepository gameExpansionRepository;
-    @Mock
     private BggClient bggClient;
 
     private GameServiceImpl service;
 
     @BeforeEach
     void setUp() {
-        service = new GameServiceImpl(gameRepository, gameExpansionRepository, bggClient);
+        service = new GameServiceImpl(gameRepository, bggClient);
     }
 
     @Test
@@ -53,28 +49,8 @@ class GameServiceImplTest {
     }
 
     @Test
-    void getGameById_fallsBackToExpansion_whenNoGameExistsButAnExpansionDoes() {
-        // Expansions link to their own game-detail page using their own id,
-        // which lives in a separate id space from Game — this must resolve
-        // to a game-shaped view of the expansion instead of 404ing.
-        GameExpansion expansion = new GameExpansion();
-        expansion.setId(ID);
-        expansion.setName("Seafarers");
-        expansion.setBggId(999L);
+    void getGameById_throwsNotFound_whenNoGameExists() {
         when(gameRepository.findById(ID)).thenReturn(Optional.empty());
-        when(gameExpansionRepository.findById(ID)).thenReturn(Optional.of(expansion));
-
-        GameResponse response = service.getGameById(ID);
-
-        assertThat(response.getId()).isEqualTo(ID);
-        assertThat(response.getName()).isEqualTo("Seafarers");
-        assertThat(response.getBggUrl()).isEqualTo("https://boardgamegeek.com/boardgame/999");
-    }
-
-    @Test
-    void getGameById_throwsNotFound_whenNeitherAGameNorAnExpansionExists() {
-        when(gameRepository.findById(ID)).thenReturn(Optional.empty());
-        when(gameExpansionRepository.findById(ID)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.getGameById(ID))
                 .isInstanceOf(ResponseStatusException.class)

@@ -10,6 +10,8 @@ public interface GameExpansionService {
 
     List<ExpansionResponse> getExpansions(Long gameId);
 
+    ExpansionResponse getExpansion(Long gameId, Long expansionId);
+
     List<BggSearchResult> searchExternal(Long gameId);
 
     ExpansionResponse createExpansion(Long gameId, CreateExpansionRequest request);
