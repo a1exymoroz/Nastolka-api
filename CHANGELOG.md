@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- `GET /api/locations/{locationId}/history/{historyId}` fetches a single
+  history entry by id (previously only the full list was available via
+  `GET .../history`).
 - Any user with at least view access to a location (owner, admin, or any
   shared user, regardless of edit permissions) can now rate a finished
   history entry via `POST /api/locations/{locationId}/history/{historyId}/votes`
