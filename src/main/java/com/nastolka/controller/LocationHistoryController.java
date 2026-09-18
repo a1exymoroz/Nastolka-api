@@ -37,6 +37,15 @@ public class LocationHistoryController {
         return ResponseEntity.ok(locationHistoryService.getHistory(locationId, username));
     }
 
+    @GetMapping("/{historyId}")
+    public ResponseEntity<HistoryResponse> getHistoryById(
+            @PathVariable Long locationId,
+            @PathVariable Long historyId,
+            @AuthenticationPrincipal String username
+    ) {
+        return ResponseEntity.ok(locationHistoryService.getHistoryById(locationId, historyId, username));
+    }
+
     @PostMapping
     public ResponseEntity<HistoryResponse> addHistory(
             @PathVariable Long locationId,

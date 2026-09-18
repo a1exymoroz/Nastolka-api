@@ -201,6 +201,32 @@ class LocationHistoryServiceImplTest {
     }
 
     @Test
+    void getHistoryById_returnsMatchingEntry_andChecksViewAccess() {
+        Long historyId = 99L;
+        LocationHistory history = new LocationHistory();
+        history.setId(historyId);
+        history.setLocation(location);
+        history.setGame(game);
+        history.setState(HistoryState.FINISHED);
+        when(locationHistoryRepository.findByIdAndLocationId(historyId, LOCATION_ID)).thenReturn(Optional.of(history));
+
+        HistoryResponse response = service.getHistoryById(LOCATION_ID, historyId, "alice");
+
+        assertThat(response.getId()).isEqualTo(historyId);
+        verify(accessGuard).requireViewAccess(location, user);
+    }
+
+    @Test
+    void getHistoryById_throwsNotFound_whenEntryBelongsToAnotherLocation() {
+        Long historyId = 99L;
+        when(locationHistoryRepository.findByIdAndLocationId(historyId, LOCATION_ID)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.getHistoryById(LOCATION_ID, historyId, "alice"))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("History entry not found");
+    }
+
+    @Test
     void deleteHistory_touchesLocationUpdatedAt() {
         Long historyId = 99L;
         LocationHistory history = new LocationHistory();
