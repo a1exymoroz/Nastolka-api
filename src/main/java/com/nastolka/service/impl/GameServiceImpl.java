@@ -5,9 +5,11 @@ import com.nastolka.dto.BggSearchResult;
 import com.nastolka.dto.CreateGameRequest;
 import com.nastolka.dto.GameResponse;
 import com.nastolka.entity.Game;
+import com.nastolka.entity.GameExpansion;
 import com.nastolka.integration.bgg.BggClient;
 import com.nastolka.integration.bgg.BggGameDetails;
 import com.nastolka.integration.bgg.BggSearchItem;
+import com.nastolka.repository.GameExpansionRepository;
 import com.nastolka.repository.GameRepository;
 import com.nastolka.service.GameService;
 import org.springframework.cache.annotation.CacheEvict;
@@ -25,10 +27,12 @@ public class GameServiceImpl implements GameService {
     private static final int DESCRIPTION_MAX_LENGTH = 2000;
 
     private final GameRepository gameRepository;
+    private final GameExpansionRepository gameExpansionRepository;
     private final BggClient bggClient;
 
-    public GameServiceImpl(GameRepository gameRepository, BggClient bggClient) {
+    public GameServiceImpl(GameRepository gameRepository, GameExpansionRepository gameExpansionRepository, BggClient bggClient) {
         this.gameRepository = gameRepository;
+        this.gameExpansionRepository = gameExpansionRepository;
         this.bggClient = bggClient;
     }
 
@@ -42,9 +46,14 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public GameResponse getGameById(Long id) {
-        Game game = gameRepository.findById(id)
+        return gameRepository.findById(id)
+                .map(this::toResponse)
+                // Expansions live in their own id space (a separate GameExpansion
+                // table), but the frontend links an assigned expansion to this same
+                // game-detail route/id — fall back to a lightweight game-shaped view
+                // of the expansion so that link resolves instead of 404ing.
+                .or(() -> gameExpansionRepository.findById(id).map(this::toResponseFromExpansion))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Game not found"));
-        return toResponse(game);
     }
 
     @Override
@@ -135,6 +144,17 @@ public class GameServiceImpl implements GameService {
                 .bggUrl(game.getBggId() != null ? BGG_GAME_URL_TEMPLATE.formatted(game.getBggId()) : null)
                 .players(formatRange(game.getMinPlayers(), game.getMaxPlayers(), "player", "players"))
                 .duration(formatRange(game.getMinPlayTime(), game.getMaxPlayTime(), "min", "min"))
+                .build();
+    }
+
+    private GameResponse toResponseFromExpansion(GameExpansion expansion) {
+        return GameResponse.builder()
+                .id(expansion.getId())
+                .bggId(expansion.getBggId())
+                .name(expansion.getName())
+                .description(expansion.getDescription())
+                .photo(expansion.getPhoto())
+                .bggUrl(expansion.getBggId() != null ? BGG_GAME_URL_TEMPLATE.formatted(expansion.getBggId()) : null)
                 .build();
     }
 

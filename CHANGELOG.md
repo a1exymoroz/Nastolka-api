@@ -78,6 +78,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   still-undecided candidates equals the number of bans still required, they
   are now auto-banned as a batch and the session completes immediately,
   since every one of them was already guaranteed to end up banned.
+- `GET /api/games/{id}` and `GET /api/games/{id}/expansions` 404'd when `id`
+  was actually a `GameExpansion` id rather than a `Game` id — hit whenever
+  the frontend links an assigned expansion to its own game-detail page,
+  since expansions live in their own id space. `GET /api/games/{id}` now
+  falls back to a lightweight game-shaped view of the expansion, and
+  `GET .../expansions` now returns an empty list for an expansion id
+  instead of 404 (an expansion never has expansions of its own).
 
 ## [0.11.0] - 2026-09-14
 

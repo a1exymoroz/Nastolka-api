@@ -40,10 +40,20 @@ public class GameExpansionServiceImpl implements GameExpansionService {
 
     @Override
     public List<ExpansionResponse> getExpansions(Long gameId) {
-        requireGame(gameId);
-        return expansionRepository.findByGameId(gameId).stream()
-                .map(this::toResponse)
-                .toList();
+        if (gameRepository.existsById(gameId)) {
+            return expansionRepository.findByGameId(gameId).stream()
+                    .map(this::toResponse)
+                    .toList();
+        }
+        // Expansions link to their own game-detail page using their own id
+        // (a separate id space from Game), which then asks for "its"
+        // expansions — an expansion never has expansions of its own, so
+        // that's an empty list, not a 404, as long as gameId is at least a
+        // real expansion.
+        if (expansionRepository.existsById(gameId)) {
+            return List.of();
+        }
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Game not found");
     }
 
     @Override
