@@ -47,6 +47,14 @@ public class GameExpansionServiceImpl implements GameExpansionService {
     }
 
     @Override
+    public ExpansionResponse getExpansion(Long gameId, Long expansionId) {
+        requireGame(gameId);
+        GameExpansion expansion = expansionRepository.findByIdAndGameId(expansionId, gameId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Expansion not found"));
+        return toResponse(expansion);
+    }
+
+    @Override
     public List<BggSearchResult> searchExternal(Long gameId) {
         Game game = requireGame(gameId);
         if (game.getBggId() == null) {

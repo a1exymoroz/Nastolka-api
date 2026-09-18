@@ -33,6 +33,12 @@ public class GameExpansionController {
         return ResponseEntity.ok(expansions);
     }
 
+    @GetMapping("/{expansionId}")
+    public ResponseEntity<ExpansionResponse> getExpansion(@PathVariable Long gameId, @PathVariable Long expansionId) {
+        ExpansionResponse expansion = expansionService.getExpansion(gameId, expansionId);
+        return ResponseEntity.ok(expansion);
+    }
+
     @GetMapping("/search-external")
     public ResponseEntity<List<BggSearchResult>> searchExternal(@PathVariable Long gameId) {
         List<BggSearchResult> results = expansionService.searchExternal(gameId);
