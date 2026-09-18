@@ -77,6 +77,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   it's a different catalog `Game` row (e.g. one manually created, one
   imported from BoardGameGeek) — closing a gap where the existing
   same-`gameId` duplicate check didn't catch this case.
+- New `GET /api/games/{gameId}/expansions/{expansionId}` endpoint to fetch a
+  single assigned expansion by id, scoped to its game — for a client that
+  wants to show one expansion's own details without treating it as if it
+  had a top-level game id of its own (expansions live in a separate id
+  space from `Game`).
 
 ### Fixed
 
